@@ -1,2 +1,1 @@
-# zenith
-znth / zenith
+# znth / zenith
