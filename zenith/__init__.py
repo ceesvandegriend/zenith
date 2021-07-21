@@ -25,5 +25,6 @@ while __zenith_dir is None:
 if __zenith_dir:
     config["zenith_dir"] = __zenith_dir
     config["db_dir"] = os.path.join(__zenith_dir, "var", "db")
+    config["db_filename"] = os.path.join(__zenith_dir, "var", "db", "zenith.db")
     config["log_dir"] = os.path.join(__zenith_dir, "var", "log")
     config["tmp_dir"] = os.path.join(__zenith_dir, "var", "tmp")
