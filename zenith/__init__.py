@@ -34,13 +34,13 @@ def __daily_log_filename():
 
 
 def log_initialize(logfile: bool = True):
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    rootLogger = logging.getLogger()
+    rootLogger.setLevel(logging.INFO)
+    format = logging.Formatter('%(asctime)s.%(msecs)03d %(name)s %(levelname)s - %(message)s', datefmt='%H:%M:%S')
 
-    format = logging.Formatter('%(asctime)s %(name)s %(levelname)s - %(message)s')
     console = logging.StreamHandler()
     console.setFormatter(format)
-    logger.addHandler(console)
+    rootLogger.addHandler(console)
 
     if sys.stdout.isatty():
         console.setLevel(logging.INFO)
@@ -48,11 +48,12 @@ def log_initialize(logfile: bool = True):
         console.setLevel(logging.FATAL)
 
     if logfile:
+        format = logging.Formatter('%(asctime)s.%(msecs)03d %(name)s %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         fh = logging.handlers.TimedRotatingFileHandler(filename=__daily_log_filename(), when="d")
         fh.rotation_filename = __daily_log_filename
         fh.setFormatter(format)
         fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
+        rootLogger.addHandler(fh)
 
 
 if __zenith_dir:
