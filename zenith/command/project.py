@@ -22,7 +22,8 @@ def active(name: str) -> None:
     Session = sessionmaker(engine)
     session = Session()
     # get client
-    project = session.query(Project).filter(Project.project_name == name).one()
+    client = _find_active_client(session)
+    project = session.query(Project).filter(Project.client_id == client.client_id, Project.project_name == name).one()
     # set all actives to false
     for active in session.query(Project).filter(Project.project_active == True):
         active.project_active = False
@@ -56,7 +57,8 @@ def delete(name: str) -> None:
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
-    project = session.query(Project).filter(Project.project_name == name).one()
+    client = _find_active_client(session)
+    project = session.query(Project).filter(Project.client_id == client.client_id, Project.project_name == name).one()
     session.delete(project)
     if session.query(Project).filter(Project.project_active == True).count() == 0:
         logger.warning(f"No active project")
@@ -71,7 +73,8 @@ def edit(name: str) -> None:
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
-    project = session.query(Project).filter(Project.project_name == name).one()
+    client = _find_active_client(session)
+    project = session.query(Project).filter(Project.client_id == client.client_id, Project.project_name == name).one()
 
     with tempfile.TemporaryDirectory(dir=config["tmp_dir"]) as tmp:
         logger.debug(f"tmp: {tmp}")
@@ -144,7 +147,8 @@ def info(name: str) -> None:
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
-    project = session.query(Project).filter(Project.project_name == name).one()
+    client = _find_active_client(session)
+    project = session.query(Project).filter(Project.client_id == client.client_id, Project.project_name == name).one()
     logger.info(f"""Info:
 Id: {project.client_id}
 Uuid: {project.project_uuid}
@@ -165,7 +169,8 @@ def list() -> None:
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
-    projects = session.query(Project).order_by(Project.project_name)
+    client = _find_active_client(session)
+    projects = session.query(Project).filter(Project.client_id == client.client_id).order_by(Project.project_name)
     logger.info(f" | CLIENT | NAME | UUID | DESCRIPTION")
 
     for project in projects:

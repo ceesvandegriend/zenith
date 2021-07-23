@@ -1,7 +1,8 @@
+import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -29,6 +30,8 @@ class Client(Base):
     created_on = Column(DateTime(), default=datetime.now, nullable=False)
     updated_on = Column(DateTime(), default=datetime.now, onupdate=datetime.now, nullable=False)
 
+    projects = relationship("Project", backref="client")
+
     def __repr__(self) -> str:
         return f"Client<client_id: {self.client_id}, client_uuid: {self.client_uuid}, client_name: {self.client_name}, client_active: {self.client_active}>"
 
@@ -50,21 +53,30 @@ class Contact(Base):
 
 class Project(Base):
     __tablename__ = "projects"
+    __table_args__ = (UniqueConstraint('client_id', 'project_name'),)
 
     client_id = Column(Integer(), ForeignKey("clients.client_id"), nullable=False)
     project_id = Column(Integer(), primary_key=True, nullable=False)
     project_uuid = Column(String(128), index=True, default=generate_uuid, nullable=False, unique=True)
-    project_name = Column(String(128), index=True, nullable=False, unique=True)
+    project_name = Column(String(128), index=True, nullable=False)
     project_active = Column(Boolean(), default=False, nullable=False)
     project_description = Column(String(255), nullable=True)
     project_remark = Column(String(1024), nullable=True)
     created_on = Column(DateTime(), default=datetime.now, nullable=False)
     updated_on = Column(DateTime(), default=datetime.now, onupdate=datetime.now, nullable=False)
 
-    client = relationship('Client', foreign_keys='Project.client_id')
+    periods = relationship("Period", backref="project")
 
     def __repr__(self) -> str:
         return f"Project<project_id: {self.project_id}, project_uuid: {self.project_uuid}, client_name: {self.client.client_name}, project_name: {self.project_name}, project_active: {self.project_active}>"
+
+
+class PeriodState(enum.Enum):
+    new = 1
+    started = 2
+    paused = 3
+    stopped = 4
+    finished = 5
 
 
 class Period(Base):
@@ -73,7 +85,12 @@ class Period(Base):
     project_id = Column(Integer(), ForeignKey("projects.project_id"), nullable=False)
     period_id = Column(Integer(), primary_key=True, nullable=False)
     period_uuid = Column(String(128), index=True, default=generate_uuid, nullable=False, unique=True)
+    period_name = Column(String(128), nullable=True)
     period_active = Column(Boolean(), default=False, nullable=False)
+    period_state = Column(Enum(PeriodState), default=PeriodState.new, nullable=False)
+    period_start = Column(DateTime(), default=None, nullable=True)
+    period_finish = Column(DateTime(), default=None, nullable=True)
+    period_duration = Column(Integer(), default=0, nullable=False)
     period_description = Column(String(255), nullable=True)
     period_remark = Column(String(1024), nullable=True)
     created_on = Column(DateTime(), default=datetime.now, nullable=False)
