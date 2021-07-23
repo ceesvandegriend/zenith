@@ -1,9 +1,12 @@
 import logging
 import sys
 
+from zenith import config
+
 import zenith.command.client
 import zenith.command.init
-from zenith import config
+import zenith.command.project
+
 
 
 def help() -> None:
@@ -14,9 +17,10 @@ zenith, version {config['version']}
 
 usage: zenith [command] 
 
-    client - Client commands
-    init   - Init commands
-    help   - Display this help text
+    client  - Client commands
+    help    - Display this help text
+    init    - Init commands
+    project - Project commands
 """)
     logger.debug("help() - Finish")
 
@@ -30,6 +34,8 @@ def execute(args: list) -> None:
             zenith.command.client.execute(args[1:])
         elif "init" == args[0]:
             zenith.command.init.execute(args[1:])
+        elif "project" == args[0]:
+            zenith.command.project.execute(args[1:])
         else:
             help()
     except IndexError:

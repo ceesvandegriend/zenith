@@ -8,7 +8,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from zenith import config
-from zenith.models import Client
+from zenith.models import Client, Project
+
+
+def _find_active_client(session) -> Client:
+    return session.query(Client).filter(Client.client_active == True).one()
 
 
 def active(name: str) -> None:
@@ -18,29 +22,31 @@ def active(name: str) -> None:
     Session = sessionmaker(engine)
     session = Session()
     # get client
-    client = session.query(Client).filter(Client.client_name == name).one()
+    project = session.query(Project).filter(Project.project_name == name).one()
     # set all actives to false
-    for active in session.query(Client).filter(Client.client_active == True):
-        active.client_active = False
+    for active in session.query(Project).filter(Project.project_active == True):
+        active.project_active = False
     # set client active
-    client.client_active = True
+    project.project_active = True
     session.commit()
-    logger.info(f"Activated: {client}")
+    logger.info(f"Activated: {project}")
     logger.debug("active() - Finish")
 
 
 def create(name: str) -> None:
     logger = logging.getLogger(__name__)
     logger.debug("create() - Start")
-    client = Client(client_name=name)
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
-    session.add(client)
-    if session.query(Client).filter(Client.client_active == True).count() == 0:
-        client.client_active = True
+
+    client = _find_active_client(session)
+    project = Project(client_id=client.client_id, project_name=name)
+    session.add(project)
+    if session.query(Project).filter(Project.project_active == True).count() == 0:
+        project.project_active = True
     session.commit()
-    logger.info(f"Created: {client}")
+    logger.info(f"Created: {project}")
     logger.debug("create() - Finish")
 
 
@@ -50,12 +56,12 @@ def delete(name: str) -> None:
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
-    client = session.query(Client).filter(Client.client_name == name).one()
-    session.delete(client)
-    if session.query(Client).filter(Client.client_active == True).count() == 0:
-        logger.warning(f"No active client")
+    project = session.query(Project).filter(Project.project_name == name).one()
+    session.delete(project)
+    if session.query(Project).filter(Project.project_active == True).count() == 0:
+        logger.warning(f"No active project")
     session.commit()
-    logger.info(f"Deleted: {client}")
+    logger.info(f"Deleted: {project}")
     logger.debug("delete() - Finish")
 
 
@@ -65,19 +71,20 @@ def edit(name: str) -> None:
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
-    client = session.query(Client).filter(Client.client_name == name).one()
+    project = session.query(Project).filter(Project.project_name == name).one()
 
     with tempfile.TemporaryDirectory(dir=config["tmp_dir"]) as tmp:
         logger.debug(f"tmp: {tmp}")
-        filename = os.path.join(tmp, f"{client.client_name}.txt")
+        filename = os.path.join(tmp, f"{project.project_name}.txt")
 
         with open(filename, "wt") as o:
-            o.write(f"Id: {client.client_id}\n")
-            o.write(f"Uuid: {client.client_uuid}\n")
-            o.write(f"Name: {client.client_name}\n")
-            o.write(f"Active: {client.client_active}\n")
-            o.write(f"Description: {client.client_description  or ''}\n")
-            o.write(f"\n{client.client_remark or ''}\n")
+            o.write(f"Id: {project.project_id}\n")
+            o.write(f"Uuid: {project.project_uuid}\n")
+            o.write(f"Client: {project.client.client_name}\n")
+            o.write(f"Name: {project.project_name}\n")
+            o.write(f"Active: {project.project_active}\n")
+            o.write(f"Description: {project.project_description  or ''}\n")
+            o.write(f"\n{project.project_remark or ''}\n")
 
         subprocess.call(["/usr/bin/vim", filename])
 
@@ -94,20 +101,20 @@ def edit(name: str) -> None:
                     else:
                         key, value = line.split(":", 2)
                         if "Id" == key:
-                            client.client_id = value.strip()
+                            project.project_id = value.strip()
                         elif "Uuid" == key:
-                            client.client_uuid = value.strip()
+                            project.project_uuid = value.strip()
                         elif "Name" == key:
-                            client.client_name = value.strip()
+                            project.project_name = value.strip()
                         elif "Description" == key:
-                            client.client_description = value.strip()
+                            project.project_description = value.strip()
                 else:
                     remark += line + "\n"
 
-            client.client_remark = remark.strip()
+            project.project_remark = remark.strip()
 
     session.commit()
-    logger.info(f"Edited: {client}")
+    logger.info(f"Edited: {project}")
     logger.debug("edit() - Finish")
 
 
@@ -137,15 +144,16 @@ def info(name: str) -> None:
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
-    client = session.query(Client).filter(Client.client_name == name).one()
+    project = session.query(Project).filter(Project.project_name == name).one()
     logger.info(f"""Info:
-Id: {client.client_id}
-Uuid: {client.client_uuid}
-Name: {client.client_name}
-Active: {client.client_active}
-Description: {client.client_description  or ''}
+Id: {project.client_id}
+Uuid: {project.project_uuid}
+Client: {project.client.client_name}
+Name: {project.project_name}
+Active: {project.project_active}
+Description: {project.project_description  or ''}
 
-{client.client_remark or ''}
+{project.project_remark or ''}
 """)
     session.commit()
     logger.debug("info() - Finish")
@@ -157,18 +165,19 @@ def list() -> None:
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
-    clients = session.query(Client).order_by(Client.client_name)
-    logger.info(f" | NAME | UUID | DESCRIPTION")
+    projects = session.query(Project).order_by(Project.project_name)
+    logger.info(f" | CLIENT | NAME | UUID | DESCRIPTION")
 
-    for client in clients:
-        name = client.client_name or ""
-        uuid = client.client_uuid or ""
-        description = client.client_description or ""
-        if client.client_active:
+    for project in projects:
+        client = project.client.client_name or ""
+        name = project.project_name or ""
+        uuid = project.project_uuid or ""
+        description = project.project_description or ""
+        if project.project_active:
             active = "+"
         else:
             active = "-"
-        logger.info(f" {active} {name} {active} {uuid} {active} {description}")
+        logger.info(f" {active} {client} {active} {name} {active} {uuid} {active} {description}")
 
     session.commit()
     logger.debug("list() - Finish")
@@ -209,12 +218,11 @@ def execute(args: list) -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     try:
-        logger.info(f"Zenith Command Client - Start")
+        logger.info(f"Zenith Command Project - Start")
         execute(sys.argv[1:])
-        logger.info(f"Zenith Command Client - Finish")
+        logger.info(f"Zenith Command Project - Finish")
     except Exception as err:
         logger.fatal(err, exc_info=True)

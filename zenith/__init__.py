@@ -5,6 +5,25 @@ import os
 import pathlib
 import sys
 
+__licence = """
+Zenith - a time tracker
+
+Copyright (C) 2021 Cees van de Griend <c.vande.griend@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 config = {}
 
 config["base_dir"] = str(pathlib.Path(__file__).parent.parent.absolute())
@@ -48,7 +67,8 @@ def log_initialize(logfile: bool = True):
         console.setLevel(logging.FATAL)
 
     if logfile:
-        format = logging.Formatter('%(asctime)s.%(msecs)03d %(name)s %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        format = logging.Formatter('%(asctime)s.%(msecs)03d %(name)s %(levelname)s - %(message)s',
+                                   datefmt='%Y-%m-%d %H:%M:%S')
         fh = logging.handlers.TimedRotatingFileHandler(filename=__daily_log_filename(), when="d")
         fh.rotation_filename = __daily_log_filename
         fh.setFormatter(format)

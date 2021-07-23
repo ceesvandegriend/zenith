@@ -45,12 +45,36 @@ def __init_database(config: dict) -> None:
     logger.debug(f"__init_database() - Finish")
 
 
+def help() -> None:
+    logger = logging.getLogger(__name__)
+    logger.debug("help() - Start")
+    logger.info(f"""
+zenith init, version {config['version']}
+
+usage: zenith init <directory> 
+
+    <directory>    - Iitializes the Zenith directories in the
+                     current working directory or in the optinal
+                     directory name on the commandline
+    help           - Display this help text
+""")
+    logger.debug("help() - Finish")
+
+
 def execute(args: list) -> None:
     logger = logging.getLogger(__name__)
     logger.debug(f"execute() - Start")
 
     if len(args) > 0:
-        directory = str(pathlib.Path(args[0]).absolute())
+        if "help" == args[0]:
+            help()
+            return
+        elif os.path.isdir(args[0]):
+            directory = str(pathlib.Path(args[0]).absolute())
+        else:
+            logger.warning(f"args: {args}")
+            help()
+            return
     else:
         directory = str(pathlib.Path(os.getcwd()).absolute())
 

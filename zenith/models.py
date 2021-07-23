@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -60,8 +61,10 @@ class Project(Base):
     created_on = Column(DateTime(), default=datetime.now, nullable=False)
     updated_on = Column(DateTime(), default=datetime.now, onupdate=datetime.now, nullable=False)
 
+    client = relationship('Client', foreign_keys='Project.client_id')
+
     def __repr__(self) -> str:
-        return f"Project<project_id: {self.project_id}, project_uuid: {self.project_uuid}, project_name: {self.project_name}, project_active: {self.project_active}>"
+        return f"Project<project_id: {self.project_id}, project_uuid: {self.project_uuid}, client_name: {self.client.client_name}, project_name: {self.project_name}, project_active: {self.project_active}>"
 
 
 class Period(Base):
