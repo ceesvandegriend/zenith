@@ -14,7 +14,6 @@ from zenith.models import Client
 def create(name: str) -> None:
     logger = logging.getLogger(__name__)
     logger.debug("create() - Start")
-
     client = Client(client_name=name)
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
@@ -22,36 +21,32 @@ def create(name: str) -> None:
     session.add(client)
     session.commit()
     logger.info(f"Created: {client}")
-
     logger.debug("create() - Finish")
 
 
 def delete(name: str) -> None:
     logger = logging.getLogger(__name__)
     logger.debug("delete() - Start")
-
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
     client = session.query(Client).filter(Client.client_name == name).one()
     session.delete(client)
     session.commit()
-
-    logger.info(f"Edited: {client}")
+    logger.info(f"Deleted: {client}")
     logger.debug("delete() - Finish")
 
 
 def edit(name: str) -> None:
     logger = logging.getLogger(__name__)
     logger.debug("edit() - Start")
-
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
     client = session.query(Client).filter(Client.client_name == name).one()
 
     with tempfile.TemporaryDirectory(dir=config["tmp_dir"]) as tmp:
-        logger.info(f"tmp: {tmp}")
+        logger.debug(f"tmp: {tmp}")
         filename = os.path.join(tmp, f"{client.client_name}.txt")
 
         with open(filename, "wt") as o:
@@ -89,7 +84,6 @@ def edit(name: str) -> None:
             client.client_remark = remark.strip()
 
     session.commit()
-
     logger.info(f"Edited: {client}")
     logger.debug("edit() - Finish")
 
@@ -116,12 +110,10 @@ usage: zenith client [command]
 def info(name: str) -> None:
     logger = logging.getLogger(__name__)
     logger.debug("info() - Start")
-
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
     client = session.query(Client).filter(Client.client_name == name).one()
-
     logger.info(f"""Info:
 Id: {client.client_id}
 Uuid: {client.client_uuid}
@@ -133,15 +125,14 @@ Description: {client.client_description  or ''}
     session.commit()
     logger.debug("info() - Finish")
 
+
 def list() -> None:
     logger = logging.getLogger(__name__)
     logger.debug("list() - Start")
-
     engine = create_engine(f"sqlite:///{config['db_filename']}")
     Session = sessionmaker(engine)
     session = Session()
     clients = session.query(Client).order_by(Client.client_name)
-
     logger.info(f" * NAME - UUID DESCRIPTION")
 
     for client in clients:
@@ -151,7 +142,6 @@ def list() -> None:
         logger.info(f" - {name} - {uuid} {description}")
 
     session.commit()
-
     logger.debug("list() - Finish")
 
 
@@ -179,6 +169,7 @@ def execute(args: list) -> None:
         else:
             help()
     except IndexError:
+        logger.warning(f"args: {args}")
         help()
 
     logger.debug(f"execute() - Finish")

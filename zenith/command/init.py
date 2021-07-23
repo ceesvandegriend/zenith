@@ -1,11 +1,6 @@
-"""
-Setup Zenith in the current working directory.
-"""
-
 import logging
 import os
 import pathlib
-import pprint
 import sys
 
 from sqlalchemy import create_engine
@@ -41,8 +36,6 @@ def __init_database(config: dict) -> None:
 
     db_filename = config["db_filename"] or None
 
-    print(db_filename)
-
     if not os.path.isfile(db_filename):
         engine = create_engine(f"sqlite:///{db_filename}")
         Base.metadata.create_all(engine)
@@ -52,9 +45,14 @@ def __init_database(config: dict) -> None:
     logger.debug(f"__init_database() - Finish")
 
 
-def execute(directory: str) -> None:
+def execute(args: list) -> None:
     logger = logging.getLogger(__name__)
-    logger.debug(f"execute({directory}) - Start")
+    logger.debug(f"execute() - Start")
+
+    if len(args) > 0:
+        directory = str(pathlib.Path(args[0]).absolute())
+    else:
+        directory = str(pathlib.Path(os.getcwd()).absolute())
 
     zenith_dir = os.path.join(directory, ".zenith")
 
@@ -71,20 +69,12 @@ def execute(directory: str) -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-
     logger = logging.getLogger(__name__)
 
     try:
         logger.info(f"Zenith Command Init - Start")
-        if len(sys.argv) == 2:
-            directory = str(pathlib.Path(sys.argv[1]).absolute())
-        else:
-            directory = str(pathlib.Path(os.getcwd()).absolute())
 
-        execute(directory)
-
-        pprint.pprint(config)
+        execute(sys.argv[1:])
 
         logger.info(f"Zenith Command Init - Finish")
     except Exception as err:

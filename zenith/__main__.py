@@ -2,6 +2,7 @@ import logging
 import sys
 
 import zenith.command.client
+import zenith.command.init
 from zenith import config
 
 
@@ -14,7 +15,8 @@ zenith, version {config['version']}
 usage: zenith [command] 
 
     client - Client commands
-    help           - Display this help text
+    init   - Init commands
+    help   - Display this help text
 """)
     logger.debug("help() - Finish")
 
@@ -26,6 +28,8 @@ def execute(args: list) -> None:
     try:
         if "client" == args[0]:
             zenith.command.client.execute(args[1:])
+        elif "init" == args[0]:
+            zenith.command.init.execute(args[1:])
         else:
             help()
     except IndexError:
@@ -35,7 +39,6 @@ def execute(args: list) -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     try:
