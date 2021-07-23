@@ -11,6 +11,24 @@ from zenith import config
 from zenith.models import Client
 
 
+def active(name: str) -> None:
+    logger = logging.getLogger(__name__)
+    logger.debug("active() - Start")
+    engine = create_engine(f"sqlite:///{config['db_filename']}")
+    Session = sessionmaker(engine)
+    session = Session()
+    # get client
+    client = session.query(Client).filter(Client.client_name == name).one()
+    # set all actives to false
+    for active in session.query(Client).filter(Client.client_active == True):
+        active.client_active = False
+    # set client active
+    client.client_active = True
+    session.commit()
+    logger.info(f"Activated: {client}")
+    logger.debug("active() - Finish")
+
+
 def create(name: str) -> None:
     logger = logging.getLogger(__name__)
     logger.debug("create() - Start")
@@ -19,6 +37,8 @@ def create(name: str) -> None:
     Session = sessionmaker(engine)
     session = Session()
     session.add(client)
+    if session.query(Client).filter(Client.client_active == True).count() == 0:
+        client.client_active = True
     session.commit()
     logger.info(f"Created: {client}")
     logger.debug("create() - Finish")
@@ -32,6 +52,8 @@ def delete(name: str) -> None:
     session = Session()
     client = session.query(Client).filter(Client.client_name == name).one()
     session.delete(client)
+    if session.query(Client).filter(Client.client_active == True).count() == 0:
+        logger.warning(f"No active clients")
     session.commit()
     logger.info(f"Deleted: {client}")
     logger.debug("delete() - Finish")
@@ -53,6 +75,7 @@ def edit(name: str) -> None:
             o.write(f"Id: {client.client_id}\n")
             o.write(f"Uuid: {client.client_uuid}\n")
             o.write(f"Name: {client.client_name}\n")
+            o.write(f"Active: {client.client_active}\n")
             o.write(f"Description: {client.client_description  or ''}\n")
             o.write(f"\n{client.client_remark or ''}\n")
 
@@ -97,6 +120,7 @@ zenith client, version {config['version']}
 
 usage: zenith client [command] 
 
+    active [name]  - Activates a client and deactivates all others
     create [name]  - Creates a client
     delete [name]  - Deletes a client
     edit [name]    - Edits the client
@@ -118,6 +142,7 @@ def info(name: str) -> None:
 Id: {client.client_id}
 Uuid: {client.client_uuid}
 Name: {client.client_name}
+Active: {client.client_active}
 Description: {client.client_description  or ''}
 
 {client.client_remark or ''}
@@ -133,13 +158,17 @@ def list() -> None:
     Session = sessionmaker(engine)
     session = Session()
     clients = session.query(Client).order_by(Client.client_name)
-    logger.info(f" * NAME - UUID DESCRIPTION")
+    logger.info(f" | NAME | UUID | DESCRIPTION")
 
     for client in clients:
         name = client.client_name or ""
         uuid = client.client_uuid or ""
         description = client.client_description or ""
-        logger.info(f" - {name} - {uuid} {description}")
+        if client.client_active:
+            active = "+"
+        else:
+            active = "-"
+        logger.info(f" {active} {name} {active} {uuid} {active} {description}")
 
     session.commit()
     logger.debug("list() - Finish")
@@ -150,7 +179,10 @@ def execute(args: list) -> None:
     logger.debug(f"execute() - Start")
 
     try:
-        if "create" == args[0]:
+        if "active" == args[0]:
+            name = args[1]
+            active(name)
+        elif "create" == args[0]:
             name = args[1]
             create(name)
         elif "delete" == args[0]:
@@ -167,6 +199,7 @@ def execute(args: list) -> None:
         elif "list" == args[0]:
             list()
         else:
+            logger.warning(f"args: {args}")
             help()
     except IndexError:
         logger.warning(f"args: {args}")
