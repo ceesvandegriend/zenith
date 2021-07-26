@@ -1,220 +1,142 @@
 import logging
-import os
-import subprocess
-import sys
-import tempfile
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from zenith import config
+from zenith.chain import Command, ContextKeyException
+from zenith.command.database import DatabaseContext
 from zenith.models import Client
 
 
-def active(name: str) -> None:
-    logger = logging.getLogger(__name__)
-    logger.debug("active() - Start")
-    engine = create_engine(f"sqlite:///{config['db_filename']}")
-    Session = sessionmaker(engine)
-    session = Session()
-    # get client
-    client = session.query(Client).filter(Client.client_name == name).one()
-    # set all actives to false
-    for active in session.query(Client).filter(Client.client_active == True):
-        active.client_active = False
-    # set client active
-    client.client_active = True
-    session.commit()
-    logger.info(f"Activated: {client}")
-    logger.debug("active() - Finish")
+class ClientCreateCommand(Command):
+    def execute(self, context: DatabaseContext) -> bool:
+        logger = logging.getLogger(__name__)
+        logger.debug("create.execute() - Start")
+
+        if not "client_name" in context:
+            raise ContextKeyException("client_name")
+
+        client_name = context["client_name"]
+
+        client = Client(client_name=client_name)
+        context.session.add(client)
+
+        logger.info(f"Client[client_name = {client_name}] - created")
+        logger.debug("create.execute() - Finish")
+        return Command.SUCCESS
 
 
-def create(name: str) -> None:
-    logger = logging.getLogger(__name__)
-    logger.debug("create() - Start")
-    client = Client(client_name=name)
-    engine = create_engine(f"sqlite:///{config['db_filename']}")
-    Session = sessionmaker(engine)
-    session = Session()
-    session.add(client)
-    if session.query(Client).filter(Client.client_active == True).count() == 0:
-        client.client_active = True
-    session.commit()
-    logger.info(f"Created: {client}")
-    logger.debug("create() - Finish")
+class ClientReadCommand(Command):
+    def execute(self, context: DatabaseContext) -> bool:
+        logger = logging.getLogger(__name__)
+        logger.debug("read.execute() - Start")
+
+        if not "client_name" in context:
+            raise ContextKeyException("client_name")
+
+        client_name = context["client_name"]
+
+        client = context.session.query(Client).filter(Client.client_name == client_name).one()
+
+        context["client"] = client
+
+        logger.debug("read.execute() - Finish")
+        return Command.SUCCESS
 
 
-def delete(name: str) -> None:
-    logger = logging.getLogger(__name__)
-    logger.debug("delete() - Start")
-    engine = create_engine(f"sqlite:///{config['db_filename']}")
-    Session = sessionmaker(engine)
-    session = Session()
-    client = session.query(Client).filter(Client.client_name == name).one()
-    session.delete(client)
-    if session.query(Client).filter(Client.client_active == True).count() == 0:
-        logger.warning(f"No active client")
-    session.commit()
-    logger.info(f"Deleted: {client}")
-    logger.debug("delete() - Finish")
+class ClientUpdateCommand(Command):
+    def execute(self, context: DatabaseContext) -> bool:
+        logger = logging.getLogger(__name__)
+        logger.debug("update.execute() - Start")
 
+        if not "client_name" in context:
+            raise ContextKeyException("client_name")
 
-def edit(name: str) -> None:
-    logger = logging.getLogger(__name__)
-    logger.debug("edit() - Start")
-    engine = create_engine(f"sqlite:///{config['db_filename']}")
-    Session = sessionmaker(engine)
-    session = Session()
-    client = session.query(Client).filter(Client.client_name == name).one()
+        updated = False
+        client_name = context["client_name"]
 
-    with tempfile.TemporaryDirectory(dir=config["tmp_dir"]) as tmp:
-        logger.debug(f"tmp: {tmp}")
-        filename = os.path.join(tmp, f"{client.client_name}.txt")
+        client = context.session.query(Client).filter(Client.client_name == client_name).one()
 
-        with open(filename, "wt") as o:
-            o.write(f"Id: {client.client_id}\n")
-            o.write(f"Uuid: {client.client_uuid}\n")
-            o.write(f"Name: {client.client_name}\n")
-            o.write(f"Active: {client.client_active}\n")
-            o.write(f"Description: {client.client_description  or ''}\n")
-            o.write(f"\n{client.client_remark or ''}\n")
+        if "client_active" in context:
+            client.client_active = context["client_active"]
+            updated = True
 
-        subprocess.call(["/usr/bin/vim", filename])
+        if "client_description" in context:
+            client.client_description = context["client_description"]
+            updated = True
 
-        with open(filename, "rt") as i:
-            remark = ""
-            header = True
+        if "client_remark" in context:
+            client.client_remark = context["client_remark"]
+            updated = True
 
-            for line in i.readlines():
-                line = line.strip()
-
-                if header:
-                    if "" == line:
-                        header = False
-                    else:
-                        key, value = line.split(":", 2)
-                        if "Id" == key:
-                            client.client_id = value.strip()
-                        elif "Uuid" == key:
-                            client.client_uuid = value.strip()
-                        elif "Name" == key:
-                            client.client_name = value.strip()
-                        elif "Description" == key:
-                            client.client_description = value.strip()
-                else:
-                    remark += line + "\n"
-
-            client.client_remark = remark.strip()
-
-    session.commit()
-    logger.info(f"Edited: {client}")
-    logger.debug("edit() - Finish")
-
-
-
-def help() -> None:
-    logger = logging.getLogger(__name__)
-    logger.debug("help() - Start")
-    logger.info(f"""
-zenith client, version {config['version']}
-
-usage: zenith client [command] 
-
-    active [name]  - Activates a client and deactivates all others
-    create [name]  - Creates a client
-    delete [name]  - Deletes a client
-    edit [name]    - Edits the client
-    help           - Display this help text
-    info [name]    - Displays the client
-    list           - Lists all clients
-""")
-    logger.debug("help() - Finish")
-
-
-def info(name: str) -> None:
-    logger = logging.getLogger(__name__)
-    logger.debug("info() - Start")
-    engine = create_engine(f"sqlite:///{config['db_filename']}")
-    Session = sessionmaker(engine)
-    session = Session()
-    client = session.query(Client).filter(Client.client_name == name).one()
-    logger.info(f"""Info:
-Id: {client.client_id}
-Uuid: {client.client_uuid}
-Name: {client.client_name}
-Active: {client.client_active}
-Description: {client.client_description  or ''}
-
-{client.client_remark or ''}
-""")
-    session.commit()
-    logger.debug("info() - Finish")
-
-
-def list() -> None:
-    logger = logging.getLogger(__name__)
-    logger.debug("list() - Start")
-    engine = create_engine(f"sqlite:///{config['db_filename']}")
-    Session = sessionmaker(engine)
-    session = Session()
-    clients = session.query(Client).order_by(Client.client_name)
-    logger.info(f" | NAME | UUID | DESCRIPTION")
-
-    for client in clients:
-        name = client.client_name or ""
-        uuid = client.client_uuid or ""
-        description = client.client_description or ""
-        if client.client_active:
-            active = "+"
+        if updated:
+            logger.info(f"Client[client_name = {client_name}] - updated")
         else:
-            active = "-"
-        logger.info(f" {active} {name} {active} {uuid} {active} {description}")
+            logger.warning(f"Client[client_name = {client_name}] - not updated")
 
-    session.commit()
-    logger.debug("list() - Finish")
-
-
-def execute(args: list) -> None:
-    logger = logging.getLogger(__name__)
-    logger.debug(f"execute() - Start")
-
-    try:
-        if "active" == args[0]:
-            name = args[1]
-            active(name)
-        elif "create" == args[0]:
-            name = args[1]
-            create(name)
-        elif "delete" == args[0]:
-            name = args[1]
-            delete(name)
-        elif "edit" == args[0]:
-            name = args[1]
-            edit(name)
-        elif "help" == args[0]:
-            help()
-        elif "info" == args[0]:
-            name = args[1]
-            info(name)
-        elif "list" == args[0]:
-            list()
-        else:
-            logger.warning(f"args: {args}")
-            help()
-    except IndexError:
-        logger.warning(f"args: {args}")
-        help()
-
-    logger.debug(f"execute() - Finish")
+        logger.debug("update.execute() - Finish")
+        return updated
 
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
+class ClientDeleteCommand(Command):
+    def execute(self, context: DatabaseContext) -> bool:
+        logger = logging.getLogger(__name__)
+        logger.debug("delete.execute() - Start")
 
-    try:
-        logger.info(f"Zenith Command Client - Start")
-        execute(sys.argv[1:])
-        logger.info(f"Zenith Command Client - Finish")
-    except Exception as err:
-        logger.fatal(err, exc_info=True)
+        if not "client_name" in context:
+            raise ContextKeyException("client_name")
+
+        client_name = context["client_name"]
+
+        client = context.session.query(Client).filter(Client.client_name == client_name).one()
+        context.session.delete(client)
+
+        logger.info(f"Client[client_name = {client_name}] - deleted")
+        logger.debug("delete.execute() - Finish")
+        return Command.SUCCESS
+
+
+class ClientListCommand(Command):
+    def execute(self, context: DatabaseContext) -> bool:
+        logger = logging.getLogger(__name__)
+        logger.debug("list.execute() - Start")
+
+        clients = context.session.query(Client).order_by(Client.client_name).all()
+        context["clients"] = clients
+
+        logger.debug("list.execute() - Finish")
+        return Command.SUCCESS
+
+
+class ClientExistCommand(Command):
+    def execute(self, context: DatabaseContext) -> bool:
+        logger = logging.getLogger(__name__)
+        logger.debug("exist.execute() - Start")
+
+        if not "client_name" in context:
+            raise ContextKeyException("client_name")
+
+        exists = True
+        client_name = context["client_name"]
+
+        if context.session.query(Client).filter(Client.client_name == client_name).count() == 0:
+            exists = False
+            logger.warning(f"Client[client_name = {client_name}] - does not exist")
+
+        logger.debug("exist.execute() - Finish")
+        return exists
+
+class ClientNotExistCommand(Command):
+    def execute(self, context: DatabaseContext) -> bool:
+        logger = logging.getLogger(__name__)
+        logger.debug("notexist.execute() - Start")
+
+        if not "client_name" in context:
+            raise ContextKeyException("client_name")
+
+        notexists = True
+        client_name = context["client_name"]
+
+        if context.session.query(Client).filter(Client.client_name == client_name).count() > 0:
+            notexists = False
+            logger.warning(f"Client[client_name = {client_name}] - does exist")
+
+        logger.debug("notexist.execute() - Finish")
+        return notexists

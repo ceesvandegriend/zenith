@@ -11,14 +11,26 @@ class CommandState(enum.Enum):
     SUCCESS = 3
 
 
+class Context(dict):
+    pass
+
+class ChainException(Exception):
+    pass
+
+class ContextException(ChainException):
+    pass
+
+class ContextKeyException(ContextException):
+    pass
+
 class Command(object):
     FAILURE = False
     SUCCESS = True
 
-    def execute(self, context: dict) -> bool:
+    def execute(self, context: Context) -> bool:
         return Command.SUCCESS
 
-    def post_execute(self, context: dict, state: CommandState, error: Exception = None) -> None:
+    def post_execute(self, context: Context, state: CommandState, error: Exception = None) -> None:
         pass
 
 
@@ -29,7 +41,7 @@ class Chain(Command):
     def append(self, command: Command) -> None:
         self.commands.append(command)
 
-    def execute(self, context: dict) -> bool:
+    def execute(self, context: Context) -> bool:
         success = True
         for command in self.commands:
             success = command.execute(context)
@@ -38,13 +50,13 @@ class Chain(Command):
 
         return success
 
-    def post_execute(self, context: dict, state: CommandState, error: Exception = None) -> None:
+    def post_execute(self, context: Context, state: CommandState, error: Exception = None) -> None:
         for command in self.commands[::-1]:
             command.post_execute(context, state, error)
 
 
 class Runner(Chain):
-    def execute(self, context: dict) -> bool:
+    def execute(self, context: Context) -> bool:
         exception = Exception("No exception")
         state = CommandState.UNKNOWN
 

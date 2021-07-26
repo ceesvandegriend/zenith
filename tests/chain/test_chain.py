@@ -15,9 +15,7 @@ class TestChain(unittest.TestCase):
         chain.append(noot)
         chain.append(mies)
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
+        context = DummyContect()
         success = False
         exception = None
 
@@ -56,10 +54,7 @@ class TestChain(unittest.TestCase):
         chain.append(noot)
         chain.append(mies)
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
-
+        context = DummyContect()
         success = False
         exception = None
 
@@ -98,9 +93,7 @@ class TestChain(unittest.TestCase):
         chain.append(noot)
         chain.append(mies)
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
+        context = DummyContect()
         success = False
         exception = None
 
@@ -150,9 +143,7 @@ class TestChain(unittest.TestCase):
         for n in range(20, 30):
             chain2.append(commands[n])
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
+        context = DummyContect()
         success = False
         exception = None
 
@@ -205,9 +196,7 @@ class TestChain(unittest.TestCase):
         for n in range(20, 30):
             chain2.append(commands[n])
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
+        context = DummyContect()
         success = False
         exception = None
 
@@ -266,9 +255,7 @@ class TestChain(unittest.TestCase):
         for n in range(20, 30):
             chain2.append(commands[n])
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
+        context = DummyContect()
         success = False
         exception = None
 

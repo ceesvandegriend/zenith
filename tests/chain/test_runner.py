@@ -15,11 +15,8 @@ class TestChain(unittest.TestCase):
         runner.append(noot)
         runner.append(mies)
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
-
-        runner.execute(context)
+        context = DummyContect()
+        self.assertTrue(runner.execute(context))
 
         self.assertTrue(aap.executed)
         self.assertTrue(noot.executed)
@@ -39,11 +36,8 @@ class TestChain(unittest.TestCase):
         runner.append(noot)
         runner.append(mies)
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
-
-        runner.execute(context)
+        context = DummyContect()
+        self.assertFalse(runner.execute(context))
 
         self.assertTrue(aap.executed)
         self.assertTrue(noot.executed)
@@ -63,10 +57,7 @@ class TestChain(unittest.TestCase):
         runner.append(noot)
         runner.append(mies)
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
-
+        context = DummyContect()
         with self.assertRaises(DummyException):
             runner.execute(context)
 
@@ -99,10 +90,7 @@ class TestChain(unittest.TestCase):
         for n in range(20, 30):
             chain2.append(commands[n])
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
-
+        context = DummyContect()
         runner.execute(context)
 
         self.assertEqual(30, len(commands))
@@ -137,10 +125,7 @@ class TestChain(unittest.TestCase):
         for n in range(20, 30):
             chain2.append(commands[n])
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
-
+        context = DummyContect()
         runner.execute(context)
 
         self.assertEqual(30, len(commands))
@@ -181,10 +166,7 @@ class TestChain(unittest.TestCase):
         for n in range(20, 30):
             chain2.append(commands[n])
 
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
-
+        context = DummyContect()
         with self.assertRaises(DummyException):
             runner.execute(context)
 

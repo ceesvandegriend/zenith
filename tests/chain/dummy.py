@@ -1,4 +1,10 @@
-from zenith.chain import Command, CommandState
+from zenith.chain import Context, Command, CommandState
+
+class DummyContect(Context):
+    def __init__(self):
+        self.counter = 0
+        self.post_counter = 0
+
 
 class DummySuccessCommand(Command):
     counter = 0
@@ -6,21 +12,21 @@ class DummySuccessCommand(Command):
     executed = False
     state = CommandState.UNKNOWN
 
-    def execute(self, context: dict) -> bool:
-        context["counter"] += 1
+    def execute(self, context: DummyContect) -> bool:
+        context.counter += 1
         self.executed = True
-        self.counter = context["counter"]
+        self.counter = context.counter
         return Command.SUCCESS
 
 
-    def post_execute(self, context: dict, state: CommandState, error: Exception = None) -> None:
-        context["post_counter"] += 1
+    def post_execute(self, context: DummyContect, state: CommandState, error: Exception = None) -> None:
+        context.post_counter += 1
         self.state = state
-        self.post_counter = context["post_counter"]
+        self.post_counter = context.post_counter
 
 
 class DummyFailureCommand(DummySuccessCommand):
-    def execute(self, context: dict) -> bool:
+    def execute(self, context: DummyContect) -> bool:
         super().execute(context)
         return Command.FAILURE
 
@@ -28,6 +34,6 @@ class DummyException(Exception):
     pass
 
 class DummyErrorCommand(DummySuccessCommand):
-    def execute(self, context: dict) -> bool:
+    def execute(self, context: DummyContect) -> bool:
         super().execute(context)
         raise DummyException("Dummy exception")

@@ -72,11 +72,14 @@ class Project(Base):
 
 
 class PeriodState(enum.Enum):
-    new = 1
-    started = 2
-    paused = 3
-    stopped = 4
-    finished = 5
+    NEW = 1
+    STARTED = 2
+    PAUSED = 3
+    STOPPED = 4
+    FINISHED = 5
+
+    def __str__(self):
+        return self.name
 
 
 class Period(Base):
@@ -87,7 +90,7 @@ class Period(Base):
     period_uuid = Column(String(128), index=True, default=generate_uuid, nullable=False, unique=True)
     period_name = Column(String(128), nullable=True)
     period_active = Column(Boolean(), default=False, nullable=False)
-    period_state = Column(Enum(PeriodState), default=PeriodState.new, nullable=False)
+    period_state = Column(Enum(PeriodState), default=PeriodState.NEW, nullable=False)
     period_start = Column(DateTime(), default=None, nullable=True)
     period_finish = Column(DateTime(), default=None, nullable=True)
     period_duration = Column(Integer(), default=0, nullable=False)

@@ -3,10 +3,10 @@ import sys
 
 from zenith import config
 
-import zenith.command.client
-import zenith.command.init
-import zenith.command.project
-
+from zenith.command1.client import ClientCommand
+import zenith.command1.init
+import zenith.command1.period
+import zenith.command1.project
 
 
 def help() -> None:
@@ -20,6 +20,7 @@ usage: zenith [command]
     client  - Client commands
     help    - Display this help text
     init    - Init commands
+    period  - Period commands
     project - Project commands
 """)
     logger.debug("help() - Finish")
@@ -31,9 +32,11 @@ def execute(args: list) -> None:
 
     try:
         if "client" == args[0]:
-            zenith.command.client.execute(args[1:])
+            ClientCommand().execute(args[1:])
         elif "init" == args[0]:
             zenith.command.init.execute(args[1:])
+        elif "period" == args[0]:
+            zenith.command.period.execute(args[1:])
         elif "project" == args[0]:
             zenith.command.project.execute(args[1:])
         else:

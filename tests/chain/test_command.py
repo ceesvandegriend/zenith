@@ -6,9 +6,7 @@ from tests.chain.dummy import *
 class TestCommand(unittest.TestCase):
     def test01(self) -> None:
         command = DummySuccessCommand()
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
+        context = DummyContect()
 
         self.assertFalse(command.executed)
         self.assertTrue(command.execute(context))
@@ -20,9 +18,7 @@ class TestCommand(unittest.TestCase):
 
     def test02(self) -> None:
         command = DummyFailureCommand()
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
+        context = DummyContect()
 
         self.assertFalse(command.executed)
         self.assertFalse(command.execute(context))
@@ -35,9 +31,7 @@ class TestCommand(unittest.TestCase):
 
     def test03(self) -> None:
         command = DummyErrorCommand()
-        context = dict()
-        context['counter'] = 0
-        context["post_counter"] = 0
+        context = DummyContect()
 
         self.assertFalse(command.executed)
         with self.assertRaises(Exception):
