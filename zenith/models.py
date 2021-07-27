@@ -3,8 +3,8 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, UniqueConstraint
-from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
@@ -34,6 +34,7 @@ class Client(Base):
 
     def __repr__(self) -> str:
         return f"Client<client_id: {self.client_id}, client_uuid: {self.client_uuid}, client_name: {self.client_name}, client_active: {self.client_active}>"
+
 
 class Contact(Base):
     __tablename__ = "contacts"
@@ -68,7 +69,9 @@ class Project(Base):
     periods = relationship("Period", backref="project")
 
     def __repr__(self) -> str:
-        return f"Project<project_id: {self.project_id}, project_uuid: {self.project_uuid}, client_name: {self.client.client_name}, project_name: {self.project_name}, project_active: {self.project_active}>"
+        return f"Project<project_id: {self.project_id}, project_uuid: {self.project_uuid}, " \
+               f"client_name: {self.client.client_name}, project_name: {self.project_name}, " \
+               f"project_active: {self.project_active}>"
 
 
 class PeriodState(enum.Enum):

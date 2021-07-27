@@ -2,9 +2,51 @@ import logging
 import os
 import subprocess
 
+from sqlalchemy.sql.expression import false, true
+
 from zenith.chain import Command, ContextKeyException
 from zenith.command.database import DatabaseContext
 from zenith.models import Client
+
+
+class ClientActivateCommand(Command):
+    def execute(self, context: DatabaseContext) -> bool:
+        logger = logging.getLogger(__name__)
+        logger.debug("activate.execute() - Start")
+
+        if "client_name" not in context:
+            raise ContextKeyException("client_name")
+
+        client_name = context["client_name"]
+
+        for client in context.session.query(Client).filter_by(client_active = True).all():
+            client.client_active = False
+
+        client = context.session.query(Client).filter(Client.client_name == client_name).one()
+        client.client_active = True
+
+        logger.info(f"Client[client_name = {client_name}] - activated")
+        logger.debug("activate.execute() - Finish")
+        return Command.SUCCESS
+
+
+class ClientActiveCommand(Command):
+    def execute(self, context: DatabaseContext) -> bool:
+        logger = logging.getLogger(__name__)
+        logger.debug("active.execute() - Start")
+
+        client = context.session.query(Client).filter(Client.client_active == true()).one()
+        print(client)
+
+        if client.client_active:
+            context["client"] = client
+            found = True
+        else:
+            logger.warning("No active client found")
+            found = False
+
+        logger.debug("active.execute() - Finish")
+        return found
 
 
 class ClientCreateCommand(Command):
@@ -153,12 +195,12 @@ class ClientDisplayCommand(Command):
         if "client" in context:
             client = context["client"]
             logger.info(f"""Client[client_name = {client.client_name}]:
-Client ID:          {client.client_id}
-Client UUID:        {client.client_uuid}
-Client name:        {client.client_name}
-Client active:      {client.client_active}
-Client description: {client.client_description or ''}
-Client remark:      {client.client_remark or ''}""")
+ID:          {client.client_id}
+UUID:        {client.client_uuid}
+Name:        {client.client_name}
+Active:      {client.client_active}
+Description: {client.client_description or ''}
+Remark:      {client.client_remark or ''}""")
         elif "clients" in context:
             clients = context["clients"]
             for client in clients:
@@ -196,10 +238,8 @@ class ClientEditCommand(Command):
             header = True
             remark = ""
 
-            for tmp in txt.readlines():
-                line = tmp.strip()
-
-                if line == "":
+            for line in txt.readlines():
+                if line == "\n":
                     header = False
 
                 if header:
@@ -222,7 +262,7 @@ class ClientEditCommand(Command):
                             context["client_description"] = value.strip()
                             changed = True
                 else:
-                    remark += line + "\n"
+                    remark += line
 
             # ToDo - Remove extra empty lines
             if len(remark):

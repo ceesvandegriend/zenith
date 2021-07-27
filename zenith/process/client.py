@@ -4,6 +4,14 @@ from zenith.process.default import DefaultProcessor
 
 
 class ClientProcessor(DefaultProcessor):
+    def activate(self, name: str) -> None:
+        context = DatabaseContext()
+        context["client_name"] = name
+
+        self.validating.append(ClientExistCommand())
+        self.processing.append(ClientActivateCommand())
+        self.execute(context)
+
     def create(self, name: str) -> None:
         context = DatabaseContext()
         context["client_name"] = name
