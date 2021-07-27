@@ -1,58 +1,48 @@
-import logging
-import sys
+import argparse
 
-from zenith import config
-
-from zenith.command1.client import ClientCommand
-import zenith.command1.init
-import zenith.command1.period
-import zenith.command1.project
-
-
-def help() -> None:
-    logger = logging.getLogger(__name__)
-    logger.debug("help() - Start")
-    logger.info(f"""
-zenith, version {config['version']}
-
-usage: zenith [command] 
-
-    client  - Client commands
-    help    - Display this help text
-    init    - Init commands
-    period  - Period commands
-    project - Project commands
-""")
-    logger.debug("help() - Finish")
-
-
-def execute(args: list) -> None:
-    logger = logging.getLogger(__name__)
-    logger.debug(f"execute() - Start")
-
-    try:
-        if "client" == args[0]:
-            ClientCommand().execute(args[1:])
-        elif "init" == args[0]:
-            zenith.command.init.execute(args[1:])
-        elif "period" == args[0]:
-            zenith.command.period.execute(args[1:])
-        elif "project" == args[0]:
-            zenith.command.project.execute(args[1:])
-        else:
-            help()
-    except IndexError:
-        help()
-
-    logger.debug(f"execute() - Finish")
-
+from zenith.process.init import InitProcessor
+from zenith.process.client import ClientProcessor
 
 if __name__ == "__main__":
-    logger = logging.getLogger(__name__)
+    parser = argparse.ArgumentParser(prog="zenith")
+    subparser = parser.add_subparsers(dest="process")
 
-    try:
-        logger.info(f"Zenith - Start")
-        execute(sys.argv[1:])
-        logger.info(f"Zenith - Finish")
-    except Exception as err:
-        logger.fatal(err, exc_info=True)
+    init = subparser.add_parser("init", help="Initialize Zenith")
+    init.add_argument("dir", nargs="?", help="Directory, default current directory")
+
+    client = subparser.add_parser("client", help="Client commands")
+    client_subparser = client.add_subparsers(dest="command")
+    client_create = client_subparser.add_parser("create", help="Creates a client")
+    client_create.add_argument("name", help="Name of the client")
+    client_read = client_subparser.add_parser("read", help="Reads a client")
+    client_read.add_argument("name", help="Name of the client")
+    client_update = client_subparser.add_parser("update", help="Updates a client")
+    client_update.add_argument("name", help="Name of the client")
+    client_delete = client_subparser.add_parser("delete", help="Deletes a client")
+    client_delete.add_argument("name", help="Name of the client")
+    client_list = client_subparser.add_parser("list", help="Lists all clients")
+
+    args = parser.parse_args()
+
+    print(f"Args: {args}")
+
+    if "init" == args.process:
+        processor = InitProcessor()
+        processor.init(args.dir)
+    elif "client" == args.process:
+        processor = ClientProcessor()
+
+        if args.command == "create":
+            processor.create(args.name)
+        elif args.command == "read":
+            processor.read(args.name)
+        elif args.command == "update":
+            processor.update(args.name)
+        elif args.command == "delete":
+            processor.delete(args.name)
+        elif args.command == "list":
+            processor.list()
+        else:
+            client.print_help()
+    else:
+        parser.print_help()

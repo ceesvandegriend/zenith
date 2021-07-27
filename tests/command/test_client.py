@@ -7,10 +7,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import sessionmaker
 
-from zenith import config
 from zenith.chain import Runner
 from zenith.command.client import *
-from zenith.command.database import DatabaseContext, DatabaseSetupCommand, DatabaseSessionCommand
+from zenith.command.database import DatabaseContext, DatabaseCreateCommand, DatabaseDropCommand, DatabaseSetupCommand, DatabaseSessionCommand
 from zenith.models import Base
 
 # Reduce logging
@@ -28,25 +27,36 @@ class FailureCommand(Command):
 class TestClient(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        db_dir = os.path.join(config["base_dir"], "var", "db")
-        cls.db_filename = os.path.join(db_dir, "zenith-test.db")
+        base_dir = pathlib.Path(__file__).parent.parent.parent.parent.absolute()
+        db_dir = os.path.join(base_dir, "var", "db")
+        db_filename = os.path.join(db_dir, "zenith-test.db")
 
         if not os.path.isdir(db_dir):
             os.makedirs(db_dir)
 
+        cls.engine = create_engine(f"sqlite:///{db_filename}")
+        cls.db_filename = db_filename
+
     def setUp(self) -> None:
-        engine = create_engine(f"sqlite:///{self.db_filename}")
-        Base.metadata.drop_all(engine)
-        Base.metadata.create_all(engine)
+        runner = Runner()
+        runner.append(DatabaseSetupCommand())
+        runner.append(DatabaseDropCommand())
+        runner.append(DatabaseCreateCommand())
+
+        context = DatabaseContext()
+        context["db_filename"] = self.db_filename
+
+        runner.execute(context)
 
     def test_create01(self):
         """ Create aap. """
         runner = Runner()
-        runner.append(DatabaseSetupCommand(self.db_filename))
+        runner.append(DatabaseSetupCommand())
         runner.append(DatabaseSessionCommand())
         runner.append(ClientCreateCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertTrue(runner.execute(context))
@@ -54,11 +64,12 @@ class TestClient(unittest.TestCase):
     def test_create02(self):
         """ Missing client_name """
         runner = Runner()
-        runner.append(DatabaseSetupCommand(self.db_filename))
+        runner.append(DatabaseSetupCommand())
         runner.append(DatabaseSessionCommand())
         runner.append(ClientCreateCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
 
         with self.assertRaises(ContextKeyException):
             runner.execute(context)
@@ -66,11 +77,12 @@ class TestClient(unittest.TestCase):
     def test_create03(self):
         """ Missing key """
         runner = Runner()
-        runner.append(DatabaseSetupCommand(self.db_filename))
+        runner.append(DatabaseSetupCommand())
         runner.append(DatabaseSessionCommand())
         runner.append(ClientCreateCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
 
         with self.assertRaises(ContextKeyException):
             runner.execute(context)
@@ -85,11 +97,12 @@ class TestClient(unittest.TestCase):
         tmp.commit()
 
         runner = Runner()
-        runner.append(DatabaseSetupCommand(self.db_filename))
+        runner.append(DatabaseSetupCommand())
         runner.append(DatabaseSessionCommand())
         runner.append(ClientCreateCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         with self.assertRaises(IntegrityError):
@@ -98,12 +111,13 @@ class TestClient(unittest.TestCase):
     def test_create05(self):
         """ Success: commit() """
         runner = Runner()
-        runner.append(DatabaseSetupCommand(self.db_filename))
+        runner.append(DatabaseSetupCommand())
         runner.append(DatabaseSessionCommand())
         runner.append(ClientCreateCommand())
         runner.append(SuccessCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertTrue(runner.execute(context))
@@ -119,12 +133,13 @@ class TestClient(unittest.TestCase):
     def test_create06(self):
         """ Failure: rollback() """
         runner = Runner()
-        runner.append(DatabaseSetupCommand(self.db_filename))
+        runner.append(DatabaseSetupCommand())
         runner.append(DatabaseSessionCommand())
         runner.append(ClientCreateCommand())
         runner.append(FailureCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertFalse(runner.execute(context))
@@ -148,11 +163,12 @@ class TestClient(unittest.TestCase):
 
 
         runner = Runner()
-        runner.append(DatabaseSetupCommand(self.db_filename))
+        runner.append(DatabaseSetupCommand())
         runner.append(DatabaseSessionCommand())
         runner.append(ClientReadCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertTrue(runner.execute(context))
@@ -170,11 +186,12 @@ class TestClient(unittest.TestCase):
     def test_read02(self):
         """ client_name does not exists """
         runner = Runner()
-        runner.append(DatabaseSetupCommand(self.db_filename))
+        runner.append(DatabaseSetupCommand())
         runner.append(DatabaseSessionCommand())
         runner.append(ClientReadCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         with self.assertRaises(NoResultFound):
@@ -185,11 +202,12 @@ class TestClient(unittest.TestCase):
     def test_read03(self):
         """ client_name does not exists """
         runner = Runner()
-        runner.append(DatabaseSetupCommand(self.db_filename))
+        runner.append(DatabaseSetupCommand())
         runner.append(DatabaseSessionCommand())
         runner.append(ClientReadCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
 
         with self.assertRaises(ContextKeyException):
             runner.execute(context)
@@ -199,11 +217,12 @@ class TestClient(unittest.TestCase):
     def test_update01(self):
         """ client_name does not exists """
         runner = Runner()
-        runner.append(DatabaseSetupCommand(self.db_filename))
+        runner.append(DatabaseSetupCommand())
         runner.append(DatabaseSessionCommand())
         runner.append(ClientUpdateCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
         context["client_description"] = "Een aap"
 
@@ -220,11 +239,12 @@ class TestClient(unittest.TestCase):
         tmp.commit()
 
         runner = Runner()
-        runner.append(DatabaseSetupCommand(self.db_filename))
+        runner.append(DatabaseSetupCommand())
         runner.append(DatabaseSessionCommand())
         runner.append(ClientUpdateCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
         context["client_active"] = True
         context["client_description"] = "Een aap beschrijving"
@@ -253,11 +273,12 @@ class TestClient(unittest.TestCase):
         updated_on = aap.updated_on
 
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientUpdateCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertFalse(runner.execute(context))
@@ -280,12 +301,13 @@ class TestClient(unittest.TestCase):
         updated_on = aap.updated_on
 
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientUpdateCommand())
         runner.append(SuccessCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
         context["client_active"] = True
 
@@ -309,12 +331,13 @@ class TestClient(unittest.TestCase):
         updated_on = aap.updated_on
 
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientUpdateCommand())
         runner.append(FailureCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
         context["client_active"] = True
 
@@ -330,11 +353,12 @@ class TestClient(unittest.TestCase):
     def test_delete01(self):
         """ client does not exist """
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientDeleteCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         with self.assertRaises(NoResultFound):
@@ -354,11 +378,12 @@ class TestClient(unittest.TestCase):
         tmp.commit()
 
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientDeleteCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertTrue(runner.execute(context))
@@ -370,11 +395,12 @@ class TestClient(unittest.TestCase):
     def test_delete03(self):
         """ client_name key does not exist """
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientDeleteCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
 
         with self.assertRaises(ContextKeyException):
             runner.execute(context)
@@ -393,12 +419,13 @@ class TestClient(unittest.TestCase):
         tmp.commit()
 
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientDeleteCommand())
         runner.append(SuccessCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertTrue(runner.execute(context))
@@ -421,12 +448,13 @@ class TestClient(unittest.TestCase):
         tmp.commit()
 
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientDeleteCommand())
         runner.append(FailureCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertFalse(runner.execute(context))
@@ -438,11 +466,12 @@ class TestClient(unittest.TestCase):
     def test_list01(self):
         """ Empty list """
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientListCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
 
         self.assertTrue(runner.execute(context))
         self.assertTrue("clients" in context)
@@ -465,11 +494,12 @@ class TestClient(unittest.TestCase):
         tmp.commit()
 
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientListCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
 
         self.assertTrue(runner.execute(context))
         self.assertTrue("clients" in context)
@@ -501,12 +531,13 @@ class TestClient(unittest.TestCase):
         tmp.commit()
 
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientListCommand())
         runner.append(SuccessCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
 
         self.assertTrue(runner.execute(context))
         self.assertTrue("clients" in context)
@@ -538,12 +569,13 @@ class TestClient(unittest.TestCase):
         tmp.commit()
 
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientListCommand())
         runner.append(FailureCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
 
         self.assertFalse(runner.execute(context))
         self.assertTrue("clients" in context)
@@ -564,11 +596,12 @@ class TestClient(unittest.TestCase):
     def test_exist01(self):
         """ Empty list """
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientExistCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
 
         with self.assertRaises(ContextKeyException):
             self.assertTrue(runner.execute(context))
@@ -582,22 +615,24 @@ class TestClient(unittest.TestCase):
         tmp.commit()
 
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientExistCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertTrue(runner.execute(context))
 
     def test_exist03(self):
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientExistCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertFalse(runner.execute(context))
@@ -605,22 +640,24 @@ class TestClient(unittest.TestCase):
     def test_notexist01(self):
         """ Empty list """
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientNotExistCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
 
         with self.assertRaises(ContextKeyException):
             self.assertTrue(runner.execute(context))
 
     def test_notexist02(self):
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientNotExistCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertTrue(runner.execute(context))
@@ -634,11 +671,12 @@ class TestClient(unittest.TestCase):
         tmp.commit()
 
         runner = Runner()
-        runner.append((DatabaseSetupCommand(self.db_filename)))
+        runner.append((DatabaseSetupCommand()))
         runner.append(DatabaseSessionCommand())
         runner.append(ClientNotExistCommand())
 
         context = DatabaseContext()
+        context["db_filename"] = self.db_filename
         context["client_name"] = "aap"
 
         self.assertFalse(runner.execute(context))

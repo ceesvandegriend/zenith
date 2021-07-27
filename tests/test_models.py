@@ -1,4 +1,5 @@
 import os
+import pathlib
 import unittest
 
 from sqlalchemy import create_engine
@@ -6,7 +7,6 @@ from sqlalchemy.orm import sessionmaker
 
 from sqlalchemy.exc import IntegrityError
 
-from zenith import config
 from zenith.models import *
 
 class TestModels(unittest.TestCase):
@@ -15,23 +15,14 @@ class TestModels(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        base_dir = config["base_dir"]
-        config["zenith_dir"] = base_dir
-        config["db_dir"] = os.path.join(base_dir, "var", "db")
-        config["db_filename"] = os.path.join(base_dir, "var", "db", "zenith-test.db")
-        config["log_dir"] = os.path.join(base_dir, "var", "log")
-        config["tmp_dir"] = os.path.join(base_dir, "var", "tmp")
+        base_dir = pathlib.Path(__file__).parent.parent.parent.absolute()
+        db_dir = os.path.join(base_dir, "var", "db")
+        db_filename = os.path.join(db_dir, "zenith-test.db")
 
-        if not os.path.isdir(config["db_dir"]):
-            os.makedirs(config["db_dir"])
+        if not os.path.isdir(db_dir):
+            os.makedirs(db_dir)
 
-        if not os.path.isdir(config["log_dir"]):
-            os.makedirs(config["log_dir"])
-
-        if not os.path.isdir(config["tmp_dir"]):
-            os.makedirs(config["tmp_dir"])
-
-        cls.engine = create_engine(f"sqlite:///{config['db_filename']}")
+        cls.engine = create_engine(f"sqlite:///{db_filename}")
         cls.Session = sessionmaker(cls.engine)
 
     def setUp(self) -> None:

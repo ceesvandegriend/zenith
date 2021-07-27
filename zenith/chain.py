@@ -14,14 +14,18 @@ class CommandState(enum.Enum):
 class Context(dict):
     pass
 
+
 class ChainException(Exception):
     pass
+
 
 class ContextException(ChainException):
     pass
 
+
 class ContextKeyException(ContextException):
     pass
+
 
 class Command(object):
     FAILURE = False
@@ -80,3 +84,25 @@ class Runner(Chain):
         else:
             # Huh, How did this happen?
             return Command.FAILURE
+
+
+class Processor(Runner):
+    def __init__(self):
+        super().__init__()
+
+        self.reporting = Chain()
+        self.initialization = Chain()
+        self.authentication = Chain()
+        self.authorization = Chain()
+        self.validating = Chain()
+        self.processing = Chain()
+
+        super().append(self.initialization)
+        super().append(self.reporting)
+        super().append(self.authentication)
+        super().append(self.authorization)
+        super().append(self.validating)
+        super().append(self.processing)
+
+    def append(self, command: Command) -> None:
+        raise ChainException("Do not use!")

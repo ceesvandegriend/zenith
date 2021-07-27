@@ -5,15 +5,15 @@ import unittest
 
 from sqlalchemy import create_engine
 
-from zenith import config
 from zenith.chain import Context, ContextKeyException, Runner
 
-from zenith.command.database import DatabaseSetupCommand
+from zenith.command.database import DatabaseContext, DatabaseCreateCommand, DatabaseSetupCommand
 
 class TestDatabase(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        db_dir = os.path.join(config["base_dir"], "var", "db")
+        base_dir = pathlib.Path(__file__).parent.parent.parent.parent.absolute()
+        db_dir = os.path.join(base_dir, "var", "db")
         db_filename = os.path.join(db_dir, "zenith-test.db")
 
         if not os.path.isdir(db_dir):
@@ -28,15 +28,15 @@ class TestDatabase(unittest.TestCase):
         if os.path.isfile(self.db_filename):
             os.remove(self.db_filename)
 
-        context = Context()
-        command = DatabaseSetupCommand(self.db_filename)
         runner = Runner()
-        runner.append(command)
+        runner.append(DatabaseSetupCommand())
+        runner.append(DatabaseCreateCommand())
+
+        context = DatabaseContext()
+        context["db_filename"] = self.db_filename
 
         self.assertTrue(runner.execute(context))
         self.assertTrue(os.path.isfile(self.db_filename))
-
-
 
 if __name__ == '__main__':
     unittest.main()
