@@ -1,11 +1,15 @@
 import argparse
+import logging
 
-from zenith.process.init import InitProcessor
-from zenith.process.client import ClientProcessor
-from zenith.process.project import ProjectProcessor
+from zenith.cli.init import InitProcessor
+from zenith.cli.client import ClientProcessor
+from zenith.cli.project import ProjectProcessor
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="zenith")
+    parser.add_argument("--debug", dest="debug", default=False, action="store_true", help="Print debug information")
+    parser.add_argument("--verbose", dest="verbose", default=False, action="store_true", help="Print verbose information")
+
     subparser = parser.add_subparsers(dest="process")
 
     init = subparser.add_parser("init", help="Initialize Zenith")
@@ -40,11 +44,18 @@ if __name__ == "__main__":
     project_list = project_subparser.add_parser("list", help="Lists all projects")
     args = parser.parse_args()
 
+    if args.debug:
+        level = logging.DEBUG
+    elif args.verbose:
+        level = logging.INFO
+    else:
+        level = logging.ERROR
+
     if "init" == args.process:
-        processor = InitProcessor()
+        processor = InitProcessor(level)
         processor.init(args.dir)
     elif "client" == args.process:
-        processor = ClientProcessor()
+        processor = ClientProcessor(level)
 
         if args.command == "activate":
             processor.activate(args.name)
@@ -61,7 +72,7 @@ if __name__ == "__main__":
         else:
             client.print_help()
     elif "project" == args.process:
-        processor = ProjectProcessor()
+        processor = ProjectProcessor(level)
 
         if args.command == "activate":
             processor.activate(args.name)

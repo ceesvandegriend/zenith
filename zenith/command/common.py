@@ -75,7 +75,9 @@ class LoggingCommand(Command):
     InitializingCommand: Initializes logging.
     """
 
-    def __init__(self):
+    def __init__(self, level = logging.ERROR):
+        super().__init__()
+        self.level = level
         self.log_dir = ""
         self.app_name = ""
 
@@ -102,14 +104,14 @@ class LoggingCommand(Command):
             logfile = True
 
         root = logging.getLogger()
-        root.setLevel(logging.INFO)
+        root.setLevel(logging.DEBUG)
         format0 = logging.Formatter('%(asctime)s.%(msecs)03d %(name)s %(levelname)s - %(message)s', datefmt='%H:%M:%S')
         console = logging.StreamHandler()
         console.setFormatter(format0)
         root.addHandler(console)
 
         if sys.stdout.isatty():
-            console.setLevel(logging.INFO)
+            console.setLevel(self.level)
         else:
             console.setLevel(logging.FATAL)
 
@@ -119,7 +121,10 @@ class LoggingCommand(Command):
             fh = logging.handlers.TimedRotatingFileHandler(filename=self.daily_log_filename(), when="d")
             fh.rotation_filename = self.daily_log_filename
             fh.setFormatter(format1)
-            fh.setLevel(logging.DEBUG)
+            if self.level == logging.DEBUG:
+                fh.setLevel(logging.DEBUG)
+            else:
+                fh.setLevel(logging.INFO)
             root.addHandler(fh)
 
         return Command.SUCCESS
@@ -149,7 +154,12 @@ class ReportCommand(Command):
     def post_execute(self, context: Context, state: CommandState, error: Exception = None) -> None:
         logger = logging.getLogger(__name__)
         delta = datetime.datetime.now() - self.start
-        duration = round(delta.microseconds / 1000)
+        duration_ms = delta.total_seconds() * 1000.0
+
+        if "user" in context:
+            user = context["user"]
+        else:
+            user = "<Unknown>"
 
         if state == CommandState.ERROR:
             status = "Error"
@@ -160,7 +170,7 @@ class ReportCommand(Command):
         else:
             status = "Unknown"
 
-        logger.info(f"{self.app_name} - Finish: {status} ({duration} ms)")
+        logger.info(f"{self.app_name} - Finish: {user} - {status} ({duration_ms:0.3f} ms)")
 
 
 class AuthenticationCommand(Command):
@@ -172,10 +182,7 @@ class AuthenticationCommand(Command):
         logger = logging.getLogger(__name__)
         logger.debug("authenticate.execute() - Start")
 
-        user = getpass.getuser()
-        context["user"] = user
-
-        logger.info(f"User: {user}")
+        context["user"] = getpass.getuser()
 
         logger.debug("authenticate.execute() - Finish")
         return Command.SUCCESS

@@ -3,7 +3,7 @@ import pathlib
 import sys
 
 from zenith.command.database import DatabaseContext, DatabaseCreateCommand
-from zenith.process.default import DefaultProcessor
+from zenith.cli.default import DefaultProcessor
 
 
 class InitProcessor(DefaultProcessor):
@@ -20,4 +20,5 @@ class InitProcessor(DefaultProcessor):
         context["logfile"] = False
 
         self.processing.append(DatabaseCreateCommand())
+
         self.execute(context)

@@ -33,7 +33,8 @@ class Client(Base):
     projects = relationship("Project", backref="client")
 
     def __repr__(self) -> str:
-        return f"Client<client_id: {self.client_id}, client_uuid: {self.client_uuid}, client_name: {self.client_name}, client_active: {self.client_active}>"
+        return f"Client<client_id: {self.client_id}, client_uuid: {self.client_uuid}, " \
+               f"client_name: {self.client_name}, client_active: {self.client_active}>"
 
 
 class Contact(Base):
@@ -49,7 +50,8 @@ class Contact(Base):
     updated_on = Column(DateTime(), default=datetime.now, onupdate=datetime.now, nullable=False)
 
     def __repr__(self) -> str:
-        return f"Contact<contact_id: {self.contact_id}, contact_uuid: {self.contact_uuid}, contact_name: {self.contact_name}, contact_active: {self.contact_active}>"
+        return f"Contact<contact_id: {self.contact_id}, contact_uuid: {self.contact_uuid}, " \
+               f"contact_name: {self.contact_name}, contact_active: {self.contact_active}>"
 
 
 class Project(Base):
@@ -79,7 +81,6 @@ class PeriodState(enum.Enum):
     STARTED = 2
     PAUSED = 3
     STOPPED = 4
-    FINISHED = 5
 
     def __str__(self):
         return self.name
@@ -103,7 +104,8 @@ class Period(Base):
     updated_on = Column(DateTime(), default=datetime.now, onupdate=datetime.now, nullable=False)
 
     def __repr__(self) -> str:
-        return f"Period<period_id: {self.period_id}, period_uuid: {self.period_uuid}, period_name: {self.period_name}, period_active: {self.period_active}>"
+        return f"Period<period_id: {self.period_id}, period_uuid: {self.period_uuid}, " \
+               f"period_name: {self.period_name}, period_active: {self.period_active}>"
 
 
 class Asset(Base):

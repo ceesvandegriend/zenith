@@ -2,8 +2,6 @@ import logging
 import os
 import subprocess
 
-from sqlalchemy.sql.expression import false, true
-
 from zenith.chain import Command, ContextKeyException
 from zenith.command.database import DatabaseContext
 from zenith.models import Client
@@ -35,8 +33,7 @@ class ClientActiveCommand(Command):
         logger = logging.getLogger(__name__)
         logger.debug("active.execute() - Start")
 
-        client = context.session.query(Client).filter(Client.client_active == true()).one()
-        print(client)
+        client = context.session.query(Client).filter(Client.client_active == True).first()
 
         if client.client_active:
             context["client"] = client
@@ -187,32 +184,6 @@ class ClientNotExistCommand(Command):
         return not_exist
 
 
-class ClientDisplayCommand(Command):
-    def execute(self, context: DatabaseContext) -> bool:
-        logger = logging.getLogger(__name__)
-        logger.debug("display.execute() - Start")
-
-        if "client" in context:
-            client = context["client"]
-            logger.info(f"""Client[client_name = {client.client_name}]:
-ID:          {client.client_id}
-UUID:        {client.client_uuid}
-Name:        {client.client_name}
-Active:      {client.client_active}
-Description: {client.client_description or ''}
-Remark:      {client.client_remark or ''}""")
-        elif "clients" in context:
-            clients = context["clients"]
-            for client in clients:
-                if client.client_active:
-                    msg = f"+ {client.client_id} + {client.client_name} + {client.client_uuid}"
-                else:
-                    msg = f"- {client.client_id} - {client.client_name} - {client.client_uuid}"
-                logger.info(msg)
-        logger.debug("display.execute() - finish")
-        return Command.SUCCESS
-
-
 class ClientEditCommand(Command):
     def execute(self, context: DatabaseContext) -> bool:
         logger = logging.getLogger(__name__)
@@ -269,6 +240,9 @@ class ClientEditCommand(Command):
                 if remark != client.client_remark:
                     context["client_remark"] = remark
                     changed = True
+
+        if os.path.isfile(filename):
+            os.remove(filename)
 
         logger.debug("edit.execute() - finish")
         return changed

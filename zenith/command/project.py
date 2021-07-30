@@ -284,13 +284,7 @@ class ProjectEditCommand(Command):
                 if header:
                     key, value = line.split(":")
 
-                    if key in "Client":
-                        pass
-                    elif key in "ID":
-                        pass
-                    elif key in "UUID":
-                        pass
-                    elif key in "Name":
+                    if key in [ "Client", "ID", "UUID", "Name"]:
                         pass
                     elif key in "Active":
                         project_active = value.strip().lower() == "true"
@@ -310,6 +304,9 @@ class ProjectEditCommand(Command):
                 if remark != project.project_remark:
                     context["project_remark"] = remark
                     changed = True
+
+        if os.path.isfile(filename):
+            os.remove(filename)
 
         logger.debug("edit.execute() - finish")
         return changed
