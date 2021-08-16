@@ -1,9 +1,9 @@
 import os
 import pathlib
-import sys
 
-from zenith.command.database import DatabaseContext, DatabaseCreateCommand
 from zenith.cli.default import DefaultProcessor
+from zenith.command.database import DatabaseContext
+from zenith.factory.init import InitFactory
 
 
 class InitProcessor(DefaultProcessor):
@@ -19,6 +19,5 @@ class InitProcessor(DefaultProcessor):
         context["zenith_dir"] = zenith_dir
         context["logfile"] = False
 
-        self.processing.append(DatabaseCreateCommand())
-
-        self.execute(context)
+        runner = InitFactory.create_init(self.log_level)
+        runner.execute(context)

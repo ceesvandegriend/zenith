@@ -1,6 +1,6 @@
-from zenith.command.client import *
-from zenith.command.database import DatabaseContext
 from zenith.cli.default import DefaultProcessor
+from zenith.command.database import DatabaseContext
+from zenith.factory.client import ClientFactory
 
 
 class ClientProcessor(DefaultProcessor):
@@ -8,51 +8,41 @@ class ClientProcessor(DefaultProcessor):
         context = DatabaseContext()
         context["client_name"] = name
 
-        self.validating.append(ClientExistCommand())
-
-        self.processing.append(ClientActivateCommand())
-
-        self.execute(context)
+        runner = ClientFactory.create_activate(self.log_level)
+        runner.execute(context)
 
     def create(self, name: str) -> None:
         context = DatabaseContext()
         context["client_name"] = name
 
-        self.validating.append(ClientNotExistCommand())
-
-        self.processing.append(ClientCreateCommand())
-
-        self.execute(context)
+        runner = ClientFactory.create_create(self.log_level)
+        runner.execute(context)
 
     def read(self, name: str) -> None:
         context = DatabaseContext()
         context["client_name"] = name
 
-        self.validating.append(ClientExistCommand())
+        runner = ClientFactory.create_read(self.log_level)
+        runner.execute(context)
 
-        self.processing.append(ClientReadCommand())
-
-        self.execute(context)
         self.display(context)
 
     def update(self, name: str) -> None:
         context = DatabaseContext()
         context["client_name"] = name
 
-        self.validating.append(ClientExistCommand())
-
-        self.processing.append(ClientReadCommand())
-
-        self.execute(context)
+        runner = ClientFactory.create_read(self.log_level)
+        runner.execute(context)
 
         client = context["client"]
         context["client_description"] = self.input("Description: ", client.client_description)
         context["client_remark"] = self.input("Remark: ", client.client_remark)
 
-        self.processing.commands.clear()
-        self.processing.append(ClientUpdateCommand())
+        runner = ClientFactory.create_update(self.log_level)
+        runner.execute(context)
 
-        self.execute(context)
+        runner = ClientFactory.create_client_read(self.log_level)
+        runner.execute(context)
 
         self.display(context)
 
@@ -60,16 +50,14 @@ class ClientProcessor(DefaultProcessor):
         context = DatabaseContext()
         context["client_name"] = name
 
-        self.validating.append(ClientExistCommand())
-        self.processing.append(ClientDeleteCommand())
-        self.execute(context)
+        runner = ClientFactory.create_delete(self.log_level)
+        runner.execute(context)
 
     def list(self) -> None:
         context = DatabaseContext()
 
-        self.processing.append(ClientListCommand())
-
-        self.execute(context)
+        runner = ClientFactory.create_list(self.log_level)
+        runner.execute(context)
 
         self.display(context)
 
@@ -95,7 +83,7 @@ Description: {client.client_description or ''}
 
 
 if __name__ == "__main__":
-    processor = ClientProcessor(logging.INFO)
+    processor = ClientProcessor()
     while True:
         line = processor.input("Test: ", "Een test waarde.")
         print(f"Line: {line}")

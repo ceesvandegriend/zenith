@@ -1,26 +1,12 @@
 import logging
 import readline
 
-from zenith.chain import Processor
+from zenith.factory.default import DefaultFactory
 
-from zenith.command.common import ZenithCommand, LoggingCommand, ReportCommand, AuthenticationCommand, ZenithDirectoryCommand
-from zenith.command.database import DatabaseSetupCommand, DatabaseSessionCommand
-from zenith.command.node import NodeUUIDCommand
 
-class DefaultProcessor(Processor):
-    def __init__(self, level):
-        super().__init__()
-
-        self.reporting.append(ReportCommand())
-
-        self.initialization.append(ZenithCommand())
-        self.initialization.append(ZenithDirectoryCommand())
-        self.initialization.append(LoggingCommand(level))
-        self.initialization.append(DatabaseSetupCommand())
-        self.initialization.append(DatabaseSessionCommand())
-        self.initialization.append(NodeUUIDCommand())
-
-        self.authentication.append(AuthenticationCommand())
+class DefaultProcessor(object):
+    def __init__(self, level = logging.ERROR):
+        self.log_level = level
 
         # Setup GNU readline
         # ToDo: read history

@@ -1,6 +1,6 @@
 from zenith.cli.default import DefaultProcessor
-from zenith.command.client import ClientActiveCommand
 from zenith.command.project import *
+from zenith.factory.project import ProjectFactory
 
 
 class ProjectProcessor(DefaultProcessor):
@@ -8,69 +8,57 @@ class ProjectProcessor(DefaultProcessor):
         context = DatabaseContext()
         context["project_name"] = name
 
-        self.validating.append(ClientActiveCommand())
-        self.validating.append(ProjectExistCommand())
-
-        self.processing.append(ProjectActivateCommand())
-
-        self.execute(context)
+        runner = ProjectFactory.create_activate(self.log_level)
+        runner.execute(context)
 
     def create(self, name: str) -> None:
         context = DatabaseContext()
         context["project_name"] = name
 
-        self.validating.append(ClientActiveCommand())
-        self.validating.append(ProjectNotExistCommand())
-
-        self.processing.append(ProjectCreateCommand())
-
-        self.execute(context)
+        runner = ProjectFactory.create_create(self.log_level)
+        runner.execute(context)
 
     def read(self, name: str) -> None:
         context = DatabaseContext()
         context["project_name"] = name
 
-        self.validating.append(ClientActiveCommand())
-        self.validating.append(ProjectExistCommand())
+        runner = ProjectFactory.create_read(self.log_level)
+        runner.execute(context)
 
-        self.processing.append(ProjectReadCommand())
-
-        self.execute(context)
         self.display(context)
 
     def update(self, name: str) -> None:
         context = DatabaseContext()
         context["project_name"] = name
 
-        self.validating.append(ClientActiveCommand())
-        self.validating.append(ProjectExistCommand())
+        runner = ProjectFactory.create_read(self.log_level)
+        runner.execute(context)
 
-        self.processing.append(ProjectReadCommand())
-        self.processing.append(ProjectEditCommand())
-        self.processing.append(ProjectUpdateCommand())
+        project = context["project"]
+        context["project_description"] = self.input("Description: ", project.project_description)
+        context["project_remark"] = self.input("Remark: ", project.project_remark)
 
-        self.execute(context)
+        runner = ProjectFactory.create_update(self.log_level)
+        runner.execute(context)
+
+        runner = ProjectFactory.create_read(self.log_level)
+        runner.execute(context)
+
         self.display(context)
 
     def delete(self, name: str) -> None:
         context = DatabaseContext()
         context["project_name"] = name
 
-        self.validating.append(ClientActiveCommand())
-        self.validating.append(ProjectExistCommand())
-
-        self.processing.append(ProjectDeleteCommand())
-
-        self.execute(context)
+        runner = ProjectFactory.create_delete(self.log_level)
+        runner.execute(context)
 
     def list(self) -> None:
         context = DatabaseContext()
 
-        self.validating.append(ClientActiveCommand())
+        runner = ProjectFactory.create_list(self.log_level)
+        runner.execute(context)
 
-        self.processing.append(ProjectListCommand())
-
-        self.execute(context)
         self.display(context)
 
     def display(self, context: DatabaseContext) -> None:
