@@ -4,6 +4,7 @@ import logging
 import logging.handlers
 import os
 import pathlib
+import readline
 import sys
 
 from zenith.chain import Command, CommandState, Context, ContextKeyException
@@ -36,6 +37,7 @@ class ZenithCommand(Command):
         zenith_dir = context["zenith_dir"]
         context["db_dir"] = os.path.join(zenith_dir, "var", "db")
         context["db_filename"] = os.path.join(zenith_dir, "var", "db", "zenith.db")
+        context["etc_dir"] = os.path.join(zenith_dir, "var", "etc")
         context["log_dir"] = os.path.join(zenith_dir, "var", "log")
         context["tmp_dir"] = os.path.join(zenith_dir, "var", "tmp")
 
@@ -186,3 +188,43 @@ class AuthenticationCommand(Command):
 
         logger.debug("authenticate.execute() - Finish")
         return Command.SUCCESS
+
+
+class ReadlineCommand(Command):
+    """
+    ReadlineCommand: Setups GNU Readline.
+    """
+    def execute(self, context: Context) -> bool:
+        logger = logging.getLogger(__name__)
+        logger.debug("readline.execute() - Start")
+
+        if "etc_dir" not in context:
+            raise ContextKeyException("etc_dir")
+
+        etc_dir = context["etc_dir"]
+
+        if not os.path.isdir(etc_dir):
+            os.makedirs(etc_dir)
+
+        self.history_filename = os.path.join(etc_dir, "zenith_history")
+
+        try:
+            readline.parse_and_bind('tab: complete')
+            readline.parse_and_bind('set editing-mode vi')
+            readline.read_history_file(self.history_filename)
+            readline.set_history_length(1000)
+        except FileNotFoundError:
+            pass
+
+        logger.debug("readline.execute() - Finish")
+        return Command.SUCCESS
+
+    def post_execute(self, context: Context, state: CommandState, error: Exception = None) -> None:
+        logger = logging.getLogger(__name__)
+        logger.debug("readline.post_execute() - Start")
+
+        if state != CommandState.ERROR:
+            readline.set_history_length(1000)
+            readline.write_history_file(self.history_filename)
+
+        logger.debug("readline.post_execute() - Finish")

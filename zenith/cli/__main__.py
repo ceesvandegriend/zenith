@@ -5,7 +5,7 @@ from zenith.cli.init import InitProcessor
 from zenith.cli.client import ClientProcessor
 from zenith.cli.project import ProjectProcessor
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(prog="zenith")
     parser.add_argument("--debug", dest="debug", default=False, action="store_true", help="Print debug information")
     parser.add_argument("--verbose", dest="verbose", default=False, action="store_true", help="Print verbose information")
@@ -90,3 +90,7 @@ if __name__ == "__main__":
             project.print_help()
     else:
         parser.print_help()
+
+
+if __name__ == "__main__":
+    main()

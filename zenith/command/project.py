@@ -284,7 +284,7 @@ class ProjectEditCommand(Command):
                 if header:
                     key, value = line.split(":")
 
-                    if key in [ "Client", "ID", "UUID", "Name"]:
+                    if key in ["Client", "ID", "UUID", "Name"]:
                         pass
                     elif key in "Active":
                         project_active = value.strip().lower() == "true"
