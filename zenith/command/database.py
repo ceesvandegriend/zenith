@@ -66,6 +66,7 @@ class DatabaseDropCommand(Command):
 class DatabaseSessionCommand(Command):
     def __init__(self):
         self.has_session = False
+        self.session = None
 
     def execute(self, context: DatabaseContext) -> bool:
         logger = logging.getLogger(__name__)

@@ -68,7 +68,7 @@ class Project(Base):
     created_on = Column(DateTime(), default=datetime.now, nullable=False)
     updated_on = Column(DateTime(), default=datetime.now, onupdate=datetime.now, nullable=False)
 
-    periods = relationship("Period", backref="project")
+    tasks = relationship("Task", backref="project")
 
     def __repr__(self) -> str:
         return f"Project<project_id: {self.project_id}, project_uuid: {self.project_uuid}, " \
@@ -76,36 +76,35 @@ class Project(Base):
                f"project_active: {self.project_active}>"
 
 
-class PeriodState(enum.Enum):
+class TaskState(enum.Enum):
     NEW = 1
     STARTED = 2
-    PAUSED = 3
-    STOPPED = 4
+    STOPPED = 3
 
     def __str__(self):
         return self.name
 
 
-class Period(Base):
-    __tablename__ = "periods"
+class Task(Base):
+    __tablename__ = "tasks"
 
     project_id = Column(Integer(), ForeignKey("projects.project_id"), nullable=False)
-    period_id = Column(Integer(), primary_key=True, nullable=False)
-    period_uuid = Column(String(128), index=True, default=generate_uuid, nullable=False, unique=True)
-    period_name = Column(String(128), nullable=True)
-    period_active = Column(Boolean(), default=False, nullable=False)
-    period_state = Column(Enum(PeriodState), default=PeriodState.NEW, nullable=False)
-    period_start = Column(DateTime(), default=None, nullable=True)
-    period_finish = Column(DateTime(), default=None, nullable=True)
-    period_duration = Column(Integer(), default=0, nullable=False)
-    period_description = Column(String(255), nullable=True)
-    period_remark = Column(String(1024), nullable=True)
+    task_id = Column(Integer(), primary_key=True, nullable=False)
+    task_uuid = Column(String(128), index=True, default=generate_uuid, nullable=False, unique=True)
+    task_name = Column(String(128), nullable=True)
+    task_active = Column(Boolean(), default=False, nullable=False)
+    task_state = Column(Enum(TaskState), default=TaskState.NEW, nullable=False)
+    task_start = Column(DateTime(), default=None, nullable=True)
+    task_finish = Column(DateTime(), default=None, nullable=True)
+    task_duration = Column(Integer(), default=0, nullable=False)
+    task_description = Column(String(255), nullable=True)
+    task_remark = Column(String(1024), nullable=True)
     created_on = Column(DateTime(), default=datetime.now, nullable=False)
     updated_on = Column(DateTime(), default=datetime.now, onupdate=datetime.now, nullable=False)
 
     def __repr__(self) -> str:
-        return f"Period<period_id: {self.period_id}, period_uuid: {self.period_uuid}, " \
-               f"period_name: {self.period_name}, period_active: {self.period_active}>"
+        return f"Task<task_id: {self.task_id}, task_uuid: {self.task_uuid}, " \
+               f"task_name: {self.task_name}, task_active: {self.task_active}>"
 
 
 class Asset(Base):

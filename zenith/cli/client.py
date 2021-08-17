@@ -1,4 +1,5 @@
 from zenith.cli.default import DefaultProcessor
+from zenith.command.common import ReadlineCommand
 from zenith.command.database import DatabaseContext
 from zenith.factory.client import ClientFactory
 

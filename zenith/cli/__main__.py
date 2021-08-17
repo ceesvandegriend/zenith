@@ -3,12 +3,13 @@ import logging
 
 from zenith.cli.init import InitProcessor
 from zenith.cli.client import ClientProcessor
+from zenith.cli.task import TaskProcessor
 from zenith.cli.project import ProjectProcessor
 
 def main():
     parser = argparse.ArgumentParser(prog="zenith")
-    parser.add_argument("--debug", dest="debug", default=False, action="store_true", help="Print debug information")
-    parser.add_argument("--verbose", dest="verbose", default=False, action="store_true", help="Print verbose information")
+    parser.add_argument("-d", "--debug", dest="debug", default=False, action="store_true", help="Print debug information")
+    parser.add_argument("-v", "--verbose", dest="verbose", default=False, action="store_true", help="Print verbose information")
 
     subparser = parser.add_subparsers(dest="process")
 
@@ -42,6 +43,22 @@ def main():
     project_delete = project_subparser.add_parser("delete", help="Deletes a project")
     project_delete.add_argument("name", help="Name of the project")
     project_list = project_subparser.add_parser("list", help="Lists all projects")
+
+    task = subparser.add_parser("task", help="Task commands")
+    task_subparser = task.add_subparsers(dest="command")
+    task_new = task_subparser.add_parser("new", help="Creates a new task")
+    task_start = task_subparser.add_parser("start", help="Starts the task")
+    task_start.add_argument("id", type=int, help="ID of the task")
+    task_stop = task_subparser.add_parser("stop", help="Stops the task")
+    task_stop.add_argument("id", type=int, help="ID of the task")
+    task_read = task_subparser.add_parser("read", help="Reads the task")
+    task_read.add_argument("id", type=int, help="ID of the task")
+    task_update = task_subparser.add_parser("update", help="Updates the task")
+    task_update.add_argument("id", type=int, help="ID of the task")
+    task_delete = task_subparser.add_parser("delete", help="Deletes the task")
+    task_delete.add_argument("id", type=int, help="ID of the task")
+    task_list = task_subparser.add_parser("list", help="Lists all tasks")
+
     args = parser.parse_args()
 
     if args.debug:
@@ -88,6 +105,26 @@ def main():
             processor.list()
         else:
             project.print_help()
+    elif "task" == args.process:
+        processor = TaskProcessor(level)
+
+        if args.command == "new":
+            processor.new()
+        elif args.command == "start":
+            processor.start(args.id)
+        elif args.command == "stop":
+            processor.stop(args.id)
+        elif args.command == "read":
+            processor.read(args.id)
+        elif args.command == "update":
+            processor.update(args.id)
+        elif args.command == "delete":
+            processor.delete(args.id)
+        elif args.command == "list":
+            processor.list()
+        else:
+            task.print_help()
+
     else:
         parser.print_help()
 
