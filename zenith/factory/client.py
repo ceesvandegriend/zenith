@@ -10,7 +10,7 @@ class ClientFactory(DefaultFactory):
     log_level = logging.INFO
 
     @classmethod
-    def create_activate(cls, level = logging.ERROR) -> Processor:
+    def create_activate(cls, level) -> Processor:
         client = cls.create_default(level)
         client.validating.append(ClientExistCommand())
         client.processing.append(ClientActivateCommand())
@@ -18,7 +18,7 @@ class ClientFactory(DefaultFactory):
         return client
 
     @classmethod
-    def create_create(cls, level = logging.ERROR) -> Processor:
+    def create_create(cls, level) -> Processor:
         client = cls.create_default(level)
         client.validating.append(ClientNotExistCommand())
         client.processing.append(ClientCreateCommand())
@@ -26,7 +26,7 @@ class ClientFactory(DefaultFactory):
         return client
 
     @classmethod
-    def create_read(cls, level = logging.ERROR) -> Processor:
+    def create_read(cls, level) -> Processor:
         client = cls.create_default(level)
         client.validating.append(ClientExistCommand())
         client.processing.append(ClientReadCommand())
@@ -34,7 +34,7 @@ class ClientFactory(DefaultFactory):
         return client
 
     @classmethod
-    def create_update(cls, level = logging.ERROR) -> Processor:
+    def create_update(cls, level) -> Processor:
         client = cls.create_default(level)
         client.validating.append(ClientExistCommand())
         client.processing.append(ClientUpdateCommand())
@@ -42,7 +42,7 @@ class ClientFactory(DefaultFactory):
         return client
 
     @classmethod
-    def create_delete(cls, level = logging.ERROR) -> Processor:
+    def create_delete(cls, level) -> Processor:
         client = cls.create_default(level)
         client.validating.append(ClientExistCommand())
         client.processing.append(ClientDeleteCommand())
@@ -50,7 +50,7 @@ class ClientFactory(DefaultFactory):
         return client
 
     @classmethod
-    def create_list(cls, level = logging.ERROR) -> Processor:
+    def create_list(cls, level) -> Processor:
         client = cls.create_default(level)
         client.processing.append(ClientListCommand())
 

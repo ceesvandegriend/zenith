@@ -10,7 +10,7 @@ from zenith.factory.default import DefaultFactory
 
 class TaskFactory(DefaultFactory):
     @classmethod
-    def create_new(cls, level=logging.ERROR) -> Processor:
+    def create_new(cls, level) -> Processor:
         task = cls.create_default(level)
         task.validating.append(ClientActiveCommand())
         task.validating.append(ProjectActiveCommand())
@@ -19,7 +19,7 @@ class TaskFactory(DefaultFactory):
         return task
 
     @classmethod
-    def create_start(cls, level=logging.ERROR) -> Processor:
+    def create_start(cls, level) -> Processor:
         task = cls.create_default(level)
         task.validating.append(ClientActiveCommand())
         task.validating.append(ProjectActiveCommand())
@@ -28,7 +28,7 @@ class TaskFactory(DefaultFactory):
         return task
 
     @classmethod
-    def create_stop(cls, level=logging.ERROR) -> Processor:
+    def create_stop(cls, level) -> Processor:
         task = cls.create_default(level)
         task.validating.append(ClientActiveCommand())
         task.validating.append(ProjectActiveCommand())
@@ -38,7 +38,7 @@ class TaskFactory(DefaultFactory):
         return task
 
     @classmethod
-    def create_read(cls, level=logging.ERROR) -> Processor:
+    def create_read(cls, level) -> Processor:
         task = cls.create_default(level)
         task.validating.append(ClientActiveCommand())
         task.validating.append(ProjectActiveCommand())
@@ -48,7 +48,7 @@ class TaskFactory(DefaultFactory):
         return task
 
     @classmethod
-    def create_update(cls, level=logging.ERROR) -> Processor:
+    def create_update(cls, level) -> Processor:
         task = cls.create_default(level)
         task.validating.append(ClientActiveCommand())
         task.validating.append(ProjectActiveCommand())
@@ -57,7 +57,7 @@ class TaskFactory(DefaultFactory):
         return task
 
     @classmethod
-    def create_delete(cls, level=logging.ERROR) -> Processor:
+    def create_delete(cls, level) -> Processor:
         task = cls.create_default(level)
         task.validating.append(ClientActiveCommand())
         task.validating.append(ProjectActiveCommand())
@@ -66,7 +66,7 @@ class TaskFactory(DefaultFactory):
         return task
 
     @classmethod
-    def create_list(cls, level=logging.ERROR) -> Processor:
+    def create_list(cls, level) -> Processor:
         task = cls.create_default(level)
         task.validating.append(ClientActiveCommand())
         task.validating.append(ProjectActiveCommand())

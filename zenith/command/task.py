@@ -107,6 +107,7 @@ class TaskUpdateCommand(Command):
             logger.info(f"Task[task_id = {task_id}] - updated")
         else:
             logger.warning(f"Task[task_id = {task_id}] - not updated")
+            context.message = f"Task[task_id = {task_id}] - not updated"
 
         logger.debug("update.execute() - Finish")
         return updated
@@ -191,6 +192,7 @@ class TaskStartCommand(Command):
 
         if task.task_state != TaskState.NEW:
             logger.warning(f"Task[task_id = {task_id}] is not NEW")
+            context.message = f"Task[task_id = {task_id}] is not NEW"
             return Command.FAILURE
 
         task.task_active = True
@@ -220,6 +222,7 @@ class TaskStopCommand(Command):
 
         if task.task_state != TaskState.STARTED:
             logger.warning(f"Task[task_id = {task_id}] is not STARTED")
+            context.message = f"Task[task_id = {task_id}] is not STARTED"
             return Command.FAILURE
 
         task.task_active = False

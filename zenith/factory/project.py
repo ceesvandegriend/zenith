@@ -11,7 +11,7 @@ class ProjectFactory(DefaultFactory):
     log_level = logging.INFO
 
     @classmethod
-    def create_activate(cls, level = logging.ERROR) -> Processor:
+    def create_activate(cls, level) -> Processor:
         project = cls.create_default(level)
         project.validating.append(ClientActiveCommand())
         project.validating.append(ProjectExistCommand())
@@ -20,7 +20,7 @@ class ProjectFactory(DefaultFactory):
         return project
 
     @classmethod
-    def create_create(cls, level = logging.ERROR) -> Processor:
+    def create_create(cls, level) -> Processor:
         project = cls.create_default(level)
         project.validating.append(ClientActiveCommand())
         project.validating.append(ProjectNotExistCommand())
@@ -29,7 +29,7 @@ class ProjectFactory(DefaultFactory):
         return project
 
     @classmethod
-    def create_read(cls, level = logging.ERROR) -> Processor:
+    def create_read(cls, level) -> Processor:
         project = cls.create_default(level)
         project.validating.append(ClientActiveCommand())
         project.validating.append(ProjectExistCommand())
@@ -38,7 +38,7 @@ class ProjectFactory(DefaultFactory):
         return project
 
     @classmethod
-    def create_update(cls, level = logging.ERROR) -> Processor:
+    def create_update(cls, level) -> Processor:
         project = cls.create_default(level)
         project.validating.append(ClientActiveCommand())
         project.validating.append(ProjectExistCommand())
@@ -47,7 +47,7 @@ class ProjectFactory(DefaultFactory):
         return project
 
     @classmethod
-    def create_delete(cls, level = logging.ERROR) -> Processor:
+    def create_delete(cls, level) -> Processor:
         project = cls.create_default(level)
         project.validating.append(ClientActiveCommand())
         project.validating.append(ProjectExistCommand())
@@ -56,7 +56,7 @@ class ProjectFactory(DefaultFactory):
         return project
 
     @classmethod
-    def create_list(cls, level = logging.ERROR) -> Processor:
+    def create_list(cls, level) -> Processor:
         project = cls.create_default(level)
         project.validating.append(ClientActiveCommand())
         project.processing.append(ProjectListCommand())

@@ -189,7 +189,9 @@ class AuthenticationCommand(Command):
         logger.debug("authenticate.execute() - Finish")
         return Command.SUCCESS
 
-
+"""
+ToDo: refactor, should be part of CLI, not a general Command.
+"""
 class ReadlineCommand(Command):
     """
     ReadlineCommand: Setups GNU Readline.

@@ -42,10 +42,11 @@ class ProjectActiveCommand(Command):
 
         if project:
             context["project"] = project
-            found = True
+            found = Command.SUCCESS
         else:
             logger.warning("No active project found")
-            found = False
+            context.message = "No active project found"
+            found = Command.FAILURE
 
         logger.debug("active.execute() - Finish")
         return found
@@ -130,6 +131,7 @@ class ProjectUpdateCommand(Command):
             logger.info(f"Project[project_name = {project_name}] - updated")
         else:
             logger.warning(f"Project[project_name = {project_name}] - not updated")
+            context.message = f"Project[project_name = {project_name}] - not updated"
 
         logger.debug("update.execute() - Finish")
         return updated
@@ -195,6 +197,7 @@ class ProjectExistCommand(Command):
                                                  Project.project_name == project_name).count() == 0:
             exist = False
             logger.warning(f"Project[project_name = {project_name}] - does not exist")
+            context.message = f"Project[project_name = {project_name}] - does not exist"
 
         logger.debug("exist.execute() - Finish")
         return exist
@@ -219,6 +222,7 @@ class ProjectNotExistCommand(Command):
                                                  Project.project_name == project_name).count() > 0:
             not_exist = False
             logger.warning(f"Project[project_name = {project_name}] - does exist")
+            context.message = f"Project[project_name = {project_name}] - does exist"
 
         logger.debug("not_exist.execute() - Finish")
         return not_exist

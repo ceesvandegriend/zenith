@@ -37,10 +37,11 @@ class ClientActiveCommand(Command):
 
         if client.client_active:
             context["client"] = client
-            found = True
+            found = Command.SUCCESS
         else:
             logger.warning("No active client found")
-            found = False
+            context.message = "No active client found"
+            found = Command.FAILURE
 
         logger.debug("active.execute() - Finish")
         return found
@@ -111,6 +112,7 @@ class ClientUpdateCommand(Command):
             logger.info(f"Client[client_name = {client_name}] - updated")
         else:
             logger.warning(f"Client[client_name = {client_name}] - not updated")
+            context.message = f"Client[client_name = {client_name}] - not updated"
 
         logger.debug("update.execute() - Finish")
         return updated
@@ -160,6 +162,7 @@ class ClientExistCommand(Command):
         if context.session.query(Client).filter(Client.client_name == client_name).count() == 0:
             exists = False
             logger.warning(f"Client[client_name = {client_name}] - does not exist")
+            context.message = f"Client[client_name = {client_name}] - does not exist"
 
         logger.debug("exist.execute() - Finish")
         return exists
@@ -179,6 +182,7 @@ class ClientNotExistCommand(Command):
         if context.session.query(Client).filter(Client.client_name == client_name).count() > 0:
             not_exist = False
             logger.warning(f"Client[client_name = {client_name}] - does exist")
+            context.message = f"Client[client_name = {client_name}] - does exist"
 
         logger.debug("not_exist.execute() - Finish")
         return not_exist

@@ -11,6 +11,7 @@ class DatabaseContext(Context):
     engine = None
     db_filename: str = None
     session = None
+    message = None
 
 
 class DatabaseSetupCommand(Command):

@@ -1,11 +1,9 @@
 import logging
 
 from zenith.chain import Processor
-from zenith.command.client import ClientActivateCommand, ClientExistCommand, ClientNotExistCommand, ClientCreateCommand, \
-    ClientReadCommand, ClientUpdateCommand, ClientDeleteCommand, ClientListCommand
 from zenith.command.common import ReportCommand, ZenithCommand, ZenithDirectoryCommand, LoggingCommand, \
     AuthenticationCommand, ReadlineCommand
-from zenith.command.database import DatabaseSetupCommand, DatabaseSessionCommand, DatabaseCreateCommand
+from zenith.command.database import DatabaseSetupCommand, DatabaseSessionCommand
 from zenith.command.node import NodeUUIDCommand
 
 

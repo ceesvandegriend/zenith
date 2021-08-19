@@ -137,12 +137,3 @@ class Note(Base):
     note_remark = Column(String(1024), nullable=True)
     created_on = Column(DateTime(), default=datetime.now, nullable=False)
     updated_on = Column(DateTime(), default=datetime.now, onupdate=datetime.now, nullable=False)
-
-
-if __name__ == "__main__":
-    from sqlalchemy import create_engine
-
-    from zenith import config
-
-    engine = create_engine(f"sqlite:///{config['db_filename']}")
-    Base.metadata.create_all(engine)
